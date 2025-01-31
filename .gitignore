@@ -1,9 +1,12 @@
+
+### Spring Boot ###
 HELP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+src/main/resources/*
 
 ### STS ###
 .apt_generated
@@ -91,8 +94,11 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-### macOS Patch ###
+### MacOS Patch ###
 # iCloud generated files
 *.icloud
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,java
+
+### Environment ###
+.env

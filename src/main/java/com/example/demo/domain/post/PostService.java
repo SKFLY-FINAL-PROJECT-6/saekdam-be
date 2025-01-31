@@ -57,7 +57,7 @@ class PostServiceImpl implements PostService {
         Post post = Post.create(postWrite, jwt);
         final Post savedPost = postRepository.save(Post.create(postWrite, jwt));
 
-        List<PostImage> postImages = postWrite.getPostImages();
+        List<PostImage> postImages = postWrite.getImages();
         if (postImages != null && !postImages.isEmpty()) {
             postImages.forEach(postImage -> postImage.setPostId(savedPost.getId()));
             postImageRepository.saveAll(postImages);

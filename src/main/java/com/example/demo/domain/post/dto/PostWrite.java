@@ -12,5 +12,5 @@ import java.util.List;
 public class PostWrite {
     private String title;
     private String content;
-    private List<PostImage> postImages;
+    private List<PostImage> images;
 }

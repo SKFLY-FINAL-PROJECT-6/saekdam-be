@@ -36,4 +36,7 @@ public class PostImage {
     @Column(name = "content_type")
     @NotNull(message = "확장자를 알 수 없습니다.")
     private String contentType;
+
+    @Column(name = "file_name")
+    private String fileName = "";
 }
