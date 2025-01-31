@@ -3,7 +3,7 @@ package com.example.demo.domain.post;
 import java.util.List;
 
 import com.example.demo.domain.post.PostImage;
-import com.example.demo.domain.post.dto.PostWrite;
+import com.example.demo.domain.post.dto.PostRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import org.springframework.data.domain.Page;
@@ -16,7 +16,7 @@ import com.example.demo.domain.comment.CommentRepository;
 
 public interface PostService {
 
-    Post create(PostWrite postWrite, Jwt jwt);
+    Post create(PostRequest postWrite, Jwt jwt);
 
     String updateTitle(String id, String title);
 
@@ -53,7 +53,7 @@ class PostServiceImpl implements PostService {
     }
 
     @Override
-    public Post create(PostWrite postWrite, Jwt jwt) {
+    public Post create(PostRequest postWrite, Jwt jwt) {
         Post post = Post.create(postWrite, jwt);
         final Post savedPost = postRepository.save(Post.create(postWrite, jwt));
 

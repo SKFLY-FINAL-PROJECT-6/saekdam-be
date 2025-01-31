@@ -7,7 +7,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import com.example.demo.domain.post.dto.PostWrite;
+import com.example.demo.domain.post.dto.PostRequest;
 
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.SQLRestriction;
@@ -77,7 +77,7 @@ public class Post {
     @Builder.Default
     private LocalDateTime deletedAt = null;
 
-    public static Post create(PostWrite postWrite, Jwt jwt) {
+    public static Post create(PostRequest postWrite, Jwt jwt) {
         Post post = Post.builder()
                 .title(postWrite.getTitle())
                 .content(postWrite.getContent())

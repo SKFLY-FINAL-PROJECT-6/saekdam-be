@@ -9,7 +9,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class PostWrite {
+public class PostRequest {
     private String title;
     private String content;
     private List<PostImage> images;

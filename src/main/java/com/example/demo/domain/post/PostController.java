@@ -16,12 +16,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.HashMap;
 import java.util.Map;
 import com.example.demo.domain.comment.Comment;
-import com.example.demo.domain.post.dto.PostWrite;
+import com.example.demo.domain.post.dto.PostRequest;
 
 public interface PostController {
     ResponseEntity<Map<String, Object>> findById(String id);
 
-    ResponseEntity<Post> create(PostWrite postWrite, Jwt jwt);
+    ResponseEntity<Post> create(PostRequest postWrite, Jwt jwt);
 
     ResponseEntity<String> updateTitle(String id, String title);
 
@@ -63,7 +63,7 @@ class PostControllerImpl implements PostController {
     @Override
     @PostMapping
     public ResponseEntity<Post> create(
-            @RequestBody PostWrite postWrite,
+            @RequestBody PostRequest postWrite,
             @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(postService.create(postWrite, jwt));
     }
