@@ -5,6 +5,10 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.oauth2.jwt.Jwt;
+
+import com.example.demo.domain.post.dto.PostWrite;
+
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -13,6 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Column;
@@ -29,6 +34,7 @@ import jakarta.persistence.Table;
 @Getter
 @Setter
 @SQLRestriction("deleted_at IS NULL")
+@Builder
 public class Post {
 
     @Id
@@ -44,15 +50,19 @@ public class Post {
     private String content;
 
     @Column(name = "author")
+    @Builder.Default
     private String author = null;
 
     @Column(name = "user_id")
+    @Builder.Default
     private String userId = null;
 
     @Column(name = "views")
-    private int views = 1;
+    @Builder.Default
+    private int views = 0;
 
     @Column(name = "num_of_comments")
+    @Builder.Default
     private int numOfComments = 0;
 
     @CreatedDate
@@ -64,6 +74,20 @@ public class Post {
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
+    @Builder.Default
     private LocalDateTime deletedAt = null;
 
+    public static Post create(PostWrite postWrite, Jwt jwt) {
+        Post post = Post.builder()
+                .title(postWrite.getTitle())
+                .content(postWrite.getContent())
+                .build();
+
+        if (jwt != null) {
+            post.setUserId(jwt.getSubject());
+            post.setAuthor(jwt.getClaim("name"));
+        }
+
+        return post;
+    }
 }

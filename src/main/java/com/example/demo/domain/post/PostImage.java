@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -19,17 +20,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Getter
+@Setter
 public class PostImage {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Column(name = "post_id")
-    @NotNull
     private String postId;
 
-    @Column(name = "order_number")
     @NotNull
+    @Column(name = "order_number")
     private Integer orderNumber;
 
     @Column(name = "content_type")

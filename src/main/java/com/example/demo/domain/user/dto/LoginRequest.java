@@ -1,13 +1,11 @@
-package com.example.demo.domain.user;
+package com.example.demo.domain.user.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import jakarta.validation.constraints.Size;
 
 @Getter
-@Setter
 @NoArgsConstructor
 public class LoginRequest {
     private String email;

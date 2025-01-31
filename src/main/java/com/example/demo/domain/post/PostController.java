@@ -2,6 +2,7 @@ package com.example.demo.domain.post;
 
 import java.util.List;
 
+import com.example.demo.domain.post.PostImage;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -15,11 +16,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.HashMap;
 import java.util.Map;
 import com.example.demo.domain.comment.Comment;
+import com.example.demo.domain.post.dto.PostWrite;
 
 public interface PostController {
     ResponseEntity<Map<String, Object>> findById(String id);
 
-    ResponseEntity<Post> create(Post post, Jwt jwt);
+    ResponseEntity<Post> create(PostWrite postWrite, Jwt jwt);
 
     ResponseEntity<String> updateTitle(String id, String title);
 
@@ -61,14 +63,9 @@ class PostControllerImpl implements PostController {
     @Override
     @PostMapping
     public ResponseEntity<Post> create(
-            @RequestBody Post post,
+            @RequestBody PostWrite postWrite,
             @AuthenticationPrincipal Jwt jwt) {
-        if (jwt != null) {
-            post.setUserId(jwt.getSubject());
-            post.setAuthor(jwt.getClaim("name"));
-        }
-
-        return ResponseEntity.ok(postService.create(post));
+        return ResponseEntity.ok(postService.create(postWrite, jwt));
     }
 
     @Override

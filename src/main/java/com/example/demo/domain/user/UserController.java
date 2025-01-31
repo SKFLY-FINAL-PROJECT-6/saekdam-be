@@ -3,6 +3,8 @@ package com.example.demo.domain.user;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.demo.domain.user.dto.LoginRequest;
+
 public interface UserController {
     ResponseEntity<User> create(User user);
 

@@ -2,6 +2,10 @@ package com.example.demo.domain.post;
 
 import java.util.List;
 
+import com.example.demo.domain.post.PostImage;
+import com.example.demo.domain.post.dto.PostWrite;
+import org.springframework.security.oauth2.jwt.Jwt;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,7 +16,7 @@ import com.example.demo.domain.comment.CommentRepository;
 
 public interface PostService {
 
-    Post create(Post post);
+    Post create(PostWrite postWrite, Jwt jwt);
 
     String updateTitle(String id, String title);
 
@@ -37,14 +41,28 @@ class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final PostImageRepository postImageRepository;
 
-    public PostServiceImpl(PostRepository postRepository, CommentRepository commentRepository) {
+    public PostServiceImpl(
+            PostRepository postRepository,
+            CommentRepository commentRepository,
+            PostImageRepository postImageRepository) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
+        this.postImageRepository = postImageRepository;
     }
 
     @Override
-    public Post create(Post post) {
+    public Post create(PostWrite postWrite, Jwt jwt) {
+        Post post = Post.create(postWrite, jwt);
+        final Post savedPost = postRepository.save(Post.create(postWrite, jwt));
+
+        List<PostImage> postImages = postWrite.getPostImages();
+        if (postImages != null && !postImages.isEmpty()) {
+            postImages.forEach(postImage -> postImage.setPostId(savedPost.getId()));
+            postImageRepository.saveAll(postImages);
+        }
+
         return postRepository.save(post);
     }
 
