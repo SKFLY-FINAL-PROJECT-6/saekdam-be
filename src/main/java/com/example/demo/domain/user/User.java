@@ -3,7 +3,6 @@ package com.example.demo.domain.user;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.SQLRestriction;
-import org.hibernate.validator.constraints.UniqueElements;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
