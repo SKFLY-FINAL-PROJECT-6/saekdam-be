@@ -2,9 +2,13 @@ package com.example.demo.domain.user;
 
 import java.util.Optional;
 
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.HttpStatus;
 
@@ -15,6 +19,8 @@ public interface UserService {
 
     String login(String email, String password);
 
+    User findById(Jwt jwt);
+
     Optional<User> findByEmail(String email);
 
     Optional<User> findByUsername(String username);
@@ -22,18 +28,12 @@ public interface UserService {
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
-
-    public UserServiceImpl(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
-            PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     @Override
     public User create(User user) {
@@ -74,6 +74,16 @@ class UserServiceImpl implements UserService {
     @Override
     public void delete(String id) {
         userRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User findById(Jwt jwt) {
+        String id = jwt.getSubject();
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "사용자를 찾을 수 없습니다."));
     }
 
     @Override
