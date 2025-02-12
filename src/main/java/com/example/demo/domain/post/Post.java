@@ -7,7 +7,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import com.example.demo.domain.post.dto.PostRequest;
+import com.example.demo.domain.post.dto.PostCreateRequest;
 
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.SQLRestriction;
@@ -36,17 +36,16 @@ import jakarta.persistence.Table;
 @SQLRestriction("deleted_at IS NULL")
 @Builder
 public class Post {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "title")
-    @Size(min = 5, max = 100, message = "제목은 5자 이상 100자 이하여야 합니다.")
+    @Column(name = "title", nullable = false)
+    @Size(min = 5, max = 20, message = "제목은 5자 이상 20자 이하여야 합니다.")
     private String title;
 
-    @Column(name = "content")
-    @Size(min = 20, max = 1000, message = "내용은 20자 이상 1000자 이하여야 합니다.")
+    @Column(name = "content", nullable = false)
+    @Size(min = 10, max = 500, message = "내용은 10자 이상 500자 이하여야 합니다.")
     private String content;
 
     @Column(name = "author")
@@ -57,16 +56,20 @@ public class Post {
     @Builder.Default
     private String userId = null;
 
-    @Column(name = "views")
+    @Column(name = "likes", nullable = false)
+    @Builder.Default
+    private int likes = 0;
+
+    @Column(name = "views", nullable = false)
     @Builder.Default
     private int views = 0;
 
-    @Column(name = "num_of_comments")
+    @Column(name = "num_of_comments", nullable = false)
     @Builder.Default
     private int numOfComments = 0;
 
     @CreatedDate
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
@@ -77,7 +80,7 @@ public class Post {
     @Builder.Default
     private LocalDateTime deletedAt = null;
 
-    public static Post create(PostRequest postWrite, Jwt jwt) {
+    public static Post create(PostCreateRequest postWrite, Jwt jwt) {
         Post post = Post.builder()
                 .title(postWrite.getTitle())
                 .content(postWrite.getContent())

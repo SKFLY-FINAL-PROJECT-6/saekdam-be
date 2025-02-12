@@ -2,26 +2,25 @@ package com.example.demo.domain.post;
 
 import java.util.List;
 
-import com.example.demo.domain.post.PostImage;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import java.util.HashMap;
-import java.util.Map;
-import com.example.demo.domain.comment.Comment;
-import com.example.demo.domain.post.dto.PostRequest;
+import com.example.demo.domain.post.dto.PostCreateResponse;
+import com.example.demo.domain.post.dto.PostCreateRequest;
+import com.example.demo.domain.post.dto.PostResponse;
+
+import lombok.RequiredArgsConstructor;
 
 public interface PostController {
-    ResponseEntity<Map<String, Object>> findById(String id);
+    ResponseEntity<PostResponse> findById(String id, Jwt jwt);
 
-    ResponseEntity<Post> create(PostRequest postWrite, Jwt jwt);
+    ResponseEntity<PostCreateResponse> create(PostCreateRequest postWrite, Jwt jwt);
 
     ResponseEntity<String> updateTitle(String id, String title);
 
@@ -34,36 +33,31 @@ public interface PostController {
     ResponseEntity<List<Post>> findByTitleContaining(String title);
 
     ResponseEntity<List<Post>> findByContentContaining(String content);
+
+    ResponseEntity<String> like(String id, Jwt jwt);
+
+    ResponseEntity<String> unlike(String id, Jwt jwt);
 }
 
 @RestController
 @RequestMapping("/posts")
+@RequiredArgsConstructor
 class PostControllerImpl implements PostController {
 
     private final PostService postService;
 
-    public PostControllerImpl(PostService postService) {
-        this.postService = postService;
-    }
-
     @Override
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> findById(
-            @PathVariable String id) {
-        Post post = postService.findById(id);
-        List<Comment> comments = postService.findAllComments(id);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("post", post);
-        response.put("comments", comments);
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<PostResponse> findById(
+            @PathVariable String id,
+            @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(postService.findById(id, jwt));
     }
 
     @Override
     @PostMapping
-    public ResponseEntity<Post> create(
-            @RequestBody PostRequest postWrite,
+    public ResponseEntity<PostCreateResponse> create(
+            @RequestBody PostCreateRequest postWrite,
             @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(postService.create(postWrite, jwt));
     }
@@ -73,17 +67,8 @@ class PostControllerImpl implements PostController {
     public ResponseEntity<String> delete(
             @PathVariable String id,
             @AuthenticationPrincipal Jwt jwt) {
-        String author = postService.findById(id).getUserId();
-        String userId = jwt != null ? jwt.getSubject() : null;
-
-        if (author != null && !author.equals(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "작성자만 삭제할 수 있습니다.");
-        }
-
-        postService.delete(id);
-        return ResponseEntity.noContent().build();
+        postService.delete(id, jwt);
+        return ResponseEntity.ok("Deleted");
     }
 
     @Override
@@ -122,4 +107,23 @@ class PostControllerImpl implements PostController {
             @RequestParam String content) {
         return ResponseEntity.ok(postService.findByContentContaining(content));
     }
+
+    @Override
+    @PostMapping("/{id}/likes")
+    public ResponseEntity<String> like(
+            @PathVariable String id,
+            @AuthenticationPrincipal Jwt jwt) {
+        postService.like(id, jwt);
+        return ResponseEntity.ok("Liked");
+    }
+
+    @Override
+    @DeleteMapping("/{id}/likes")
+    public ResponseEntity<String> unlike(
+            @PathVariable String id,
+            @AuthenticationPrincipal Jwt jwt) {
+        postService.unlike(id, jwt);
+        return ResponseEntity.ok("Unliked");
+    }
+
 }

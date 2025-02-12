@@ -15,6 +15,18 @@ public interface PostRepository extends JpaRepository<Post, String> {
     List<Post> findByContentContaining(String content);
 
     @Modifying
+    @Query("UPDATE Post p SET p.views = p.views + 1 WHERE p.id = :id")
+    void incrementViews(@Param("id") String id);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.likes = p.likes - 1 WHERE p.id = :id")
+    void decrementLikes(@Param("id") String id);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.likes = p.likes + 1 WHERE p.id = :id")
+    void incrementLikes(@Param("id") String id);
+
+    @Modifying
     @Query("UPDATE Post p SET p.content = :content WHERE p.id = :id")
     void updateContent(@Param("id") String id, @Param("content") String content);
 
