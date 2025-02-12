@@ -1,5 +1,6 @@
 package com.example.demo.domain.comment;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,13 +16,10 @@ public interface CommentController {
 
 @RestController
 @RequestMapping("/comments")
+@RequiredArgsConstructor
 class CommentControllerImpl implements CommentController {
 
     private final CommentService commentService;
-
-    public CommentControllerImpl(CommentService commentService) {
-        this.commentService = commentService;
-    }
 
     @Override
     @PostMapping

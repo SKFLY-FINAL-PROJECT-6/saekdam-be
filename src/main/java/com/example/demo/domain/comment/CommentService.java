@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
 import com.example.demo.domain.post.Post;
 import com.example.demo.domain.post.PostRepository;
 
@@ -22,15 +23,11 @@ public interface CommentService {
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
-
-    public CommentServiceImpl(CommentRepository commentRepository, PostRepository postRepository) {
-        this.commentRepository = commentRepository;
-        this.postRepository = postRepository;
-    }
 
     @Override
     @Transactional(readOnly = true)
