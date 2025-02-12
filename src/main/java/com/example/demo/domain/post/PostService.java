@@ -1,11 +1,21 @@
 package com.example.demo.domain.post;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.UUID;
+import java.util.Optional;
 
-import com.example.demo.domain.post.PostImage;
-import com.example.demo.domain.post.dto.PostRequest;
+import org.springframework.http.HttpStatus;
+
+import com.example.demo.domain.post.dto.PostCreateRequest;
+import com.example.demo.domain.post.dto.PostResponse;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.oauth2.jwt.Jwt;
+import com.example.demo.domain.post.dto.PostCreateResponse;
 
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,75 +23,90 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.domain.comment.Comment;
 import com.example.demo.domain.comment.CommentRepository;
+import com.example.demo.domain.like.PostLikeRepository;
+import com.example.demo.domain.like.entity.PostLike;
 
 public interface PostService {
 
-    Post create(PostRequest postWrite, Jwt jwt);
+    PostCreateResponse create(PostCreateRequest postWrite, Jwt jwt);
 
     String updateTitle(String id, String title);
 
     String updateContent(String id, String content);
 
-    void delete(String id);
+    void delete(String id, Jwt jwt);
 
-    Post findById(String id);
+    PostResponse findById(String id, Jwt jwt);
 
     Page<Post> findAll(Pageable pageable);
 
     List<Comment> findAllComments(String id);
 
+    List<UUID> findAllImages(String id);
+
     List<Post> findByTitleContaining(String title);
 
     List<Post> findByContentContaining(String content);
+
+    void like(String id, Jwt jwt);
+
+    void unlike(String id, Jwt jwt);
 }
 
 @Service
-@Transactional
+@RequiredArgsConstructor
 class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final PostImageRepository postImageRepository;
-
-    public PostServiceImpl(
-            PostRepository postRepository,
-            CommentRepository commentRepository,
-            PostImageRepository postImageRepository) {
-        this.commentRepository = commentRepository;
-        this.postRepository = postRepository;
-        this.postImageRepository = postImageRepository;
-    }
+    private final PostLikeRepository postLikeRepository;
 
     @Override
-    public Post create(PostRequest postWrite, Jwt jwt) {
-        Post post = Post.create(postWrite, jwt);
+    @Transactional
+    public PostCreateResponse create(PostCreateRequest postWrite, Jwt jwt) {
         final Post savedPost = postRepository.save(Post.create(postWrite, jwt));
 
-        List<PostImage> postImages = postWrite.getImages();
-        if (postImages != null && !postImages.isEmpty()) {
-            postImages.forEach(postImage -> postImage.setPostId(savedPost.getId()));
-            postImageRepository.saveAll(postImages);
-        }
-
-        return postRepository.save(post);
+        return Optional.ofNullable(postWrite.getImages())
+                .filter(images -> !images.isEmpty())
+                .map(images -> {
+                    images.forEach(image -> image.setPostId(savedPost.getId()));
+                    return new PostCreateResponse(
+                            postImageRepository.saveAll(images)
+                                    .stream()
+                                    .map(image -> UUID.fromString(image.getId()))
+                                    .collect(Collectors.toList()));
+                })
+                .orElseGet(() -> new PostCreateResponse(List.of()));
     }
 
     @Override
+    @Transactional
     public String updateTitle(String id, String title) {
         postRepository.updateTitle(id, title);
-
         return title;
     }
 
     @Override
+    @Transactional
     public String updateContent(String id, String content) {
         postRepository.updateContent(id, content);
-
         return content;
     }
 
     @Override
-    public void delete(String id) {
+    @Transactional
+    public void delete(String id, Jwt jwt) {
+        String author = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"))
+                .getUserId();
+        String userId = jwt != null ? jwt.getSubject() : null;
+
+        if (author != null && !author.equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "작성자만 삭제할 수 있습니다.");
+        }
+
         java.time.LocalDateTime deleteTime = java.time.LocalDateTime.now();
         Post postToDelete = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -92,18 +117,35 @@ class PostServiceImpl implements PostService {
     }
 
     @Override
-    public Post findById(String id) {
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+    @Transactional
+    public PostResponse findById(String id, Jwt jwt) {
+        Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
+        List<Comment> comments = commentRepository.findByPostId(id);
+        boolean isLiked = (jwt != null) ? postLikeRepository.existsByPostIdAndUserId(id, jwt.getSubject()) : false;
 
-        post.setViews(post.getViews() + 1);
-        return postRepository.save(post);
+        List<UUID> images = postImageRepository.findByPostId(id)
+                .stream()
+                .map(image -> UUID.fromString(image.getId()))
+                .collect(Collectors.toList());
+
+        postRepository.incrementViews(id);
+
+        return PostResponse.of(post, isLiked, images, comments);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Comment> findAllComments(String id) {
         return commentRepository.findByPostId(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> findAllImages(String id) {
+        return postImageRepository.findByPostId(id)
+                .stream()
+                .map(image -> UUID.fromString(image.getId()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -124,4 +166,39 @@ class PostServiceImpl implements PostService {
         return postRepository.findAll(pageable);
     }
 
+    @Override
+    @Transactional
+    public void like(String id, Jwt jwt) {
+        if (jwt == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "로그인이 필요합니다.");
+        }
+        String userId = jwt.getSubject();
+
+        if (postLikeRepository.existsByPostIdAndUserId(id, userId)) {
+            return;
+        }
+
+        postLikeRepository.save(PostLike.builder()
+                .postId(id)
+                .userId(userId)
+                .build());
+
+        postRepository.incrementLikes(id);
+    }
+
+    @Override
+    @Transactional
+    public void unlike(String id, Jwt jwt) {
+        if (jwt == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "로그인이 필요합니다.");
+        }
+        String userId = jwt.getSubject();
+
+        if (!postLikeRepository.existsByPostIdAndUserId(id, userId)) {
+            return;
+        }
+
+        postLikeRepository.deleteByPostIdAndUserId(id, userId);
+        postRepository.decrementLikes(id);
+    }
 }
