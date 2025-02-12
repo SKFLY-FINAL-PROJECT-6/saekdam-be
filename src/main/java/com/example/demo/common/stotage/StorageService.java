@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.UUID;
 import java.util.Date;
 import java.net.URL;
 import com.amazonaws.HttpMethod;
@@ -13,12 +12,14 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 
 public interface StorageService {
-    List<String> generatePresignedUrls(List<String> uuids);
+    List<String> createObjectUploadUrls(List<String> objectKeys);
+
+    List<String> createObjectAccessUrls(List<String> objectKeys);
 }
 
 @Service
 class S3StorageService implements StorageService {
-    @Value("${aws.s3.bucket}")
+    @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
 
     private final AmazonS3 s3Client;
@@ -28,18 +29,22 @@ class S3StorageService implements StorageService {
     }
 
     @Override
-    public List<String> generatePresignedUrls(List<String> uuids) {
+    public List<String> createObjectUploadUrls(List<String> objectKeys) {
         List<String> urls = new ArrayList<>();
-        for (int i = 0; i < uuids.size(); i++) {
-            urls.add(generatePresignedUrl(uuids.get(i)));
-        }
-
+        objectKeys.forEach(key -> urls.add(generatePresignedUrl(key, HttpMethod.PUT)));
         return urls;
     }
 
-    private String generatePresignedUrl(String objectKey) {
+    @Override
+    public List<String> createObjectAccessUrls(List<String> objectKeys) {
+        List<String> urls = new ArrayList<>();
+        objectKeys.forEach(key -> urls.add(generatePresignedUrl(key, HttpMethod.GET)));
+        return urls;
+    }
+
+    private String generatePresignedUrl(String objectKey, HttpMethod method) {
         GeneratePresignedUrlRequest generatePresignedUrlRequest = new GeneratePresignedUrlRequest(bucketName, objectKey)
-                .withMethod(HttpMethod.PUT)
+                .withMethod(method)
                 .withExpiration(getExpirationTime());
         URL url = s3Client.generatePresignedUrl(generatePresignedUrlRequest);
         return url.toString();
