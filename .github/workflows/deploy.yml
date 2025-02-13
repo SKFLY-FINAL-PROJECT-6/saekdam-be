@@ -17,7 +17,7 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v3
 
-            # Step 1: AWS Credentials 설정
+            # ✅ AWS Credentials 설정
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v3
               with:
@@ -25,14 +25,14 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # Step 2: EC2 환경 준비 (Git, Docker, Java 설치 및 디렉토리 설정)
+            # ✅ EC2 환경 설정 (Docker, Java 설치)
             - name: Prepare EC2 Environment via SSM
               run: |
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters commands='[
-                      "echo ====== Checking and Installing Required Packages ======",
+                      "echo ====== Installing Required Packages ======",
                       "sudo yum update -y",
                       "sudo yum install -y git docker docker-compose java-17-amazon-corretto",
                       "sudo systemctl start docker",
@@ -50,7 +50,7 @@ jobs:
                     --command-id "$COMMAND_ID" \
                     --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # Step 3: 애플리케이션 배포 및 실행
+            # ✅ Spring Boot 애플리케이션 배포 및 실행
             - name: Deploy and Run Application via SSM
               run: |
                   COMMAND_ID=$(aws ssm send-command \
@@ -79,7 +79,7 @@ jobs:
                     --command-id "$COMMAND_ID" \
                     --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # Step 4: Docker 상태 및 로그 확인
+            # ✅ Docker 상태 및 로그 확인
             - name: Check Docker Status via SSM
               run: |
                   COMMAND_ID=$(aws ssm send-command \
@@ -102,7 +102,7 @@ jobs:
                     --command-id "$COMMAND_ID" \
                     --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # Step 5: Spring Boot 상태 확인
+            # ✅ Spring Boot 상태 확인
             - name: Check Spring Boot API Health via SSM
               run: |
                   COMMAND_ID=$(aws ssm send-command \
