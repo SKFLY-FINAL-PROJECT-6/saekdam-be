@@ -1,0 +1,40 @@
+name: Deploy to EC2 via SSM
+
+on:
+    push:
+        branches:
+            - main # main 브랜치에 push될 때 실행
+
+permissions:
+    id-token: write
+    contents: read
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ secrets.AWS_REGION }}
+
+            - name: Deploy using SSM Run Command
+              run: |
+                  aws ssm send-command \
+                    --document-name "AWS-RunShellScript" \
+                    --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+                    --parameters 'commands=[
+                      "cd /home/ec2-user/app",
+                      "git pull origin main",
+                      "chmod +x gradlew",
+                      "./gradlew clean build -x test",
+                      "docker-compose down",
+                      "docker-compose up -d"
+                    ]' \
+                    --comment "Deploy Spring Boot & MySQL via SSM"
