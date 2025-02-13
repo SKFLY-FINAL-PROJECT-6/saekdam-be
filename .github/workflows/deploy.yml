@@ -73,8 +73,10 @@ jobs:
                       "git pull origin main",
                       "echo ====== Spring Boot 애플리케이션 빌드 ======",
                       "chmod +x gradlew",
+                      "export PATH=/usr/bin:/usr/local/bin:$PATH",
                       "./gradlew clean build -x test",
                       "echo ====== Docker 컨테이너 재시작 ======",
+                      "export PATH=/usr/bin:/usr/local/bin:$PATH",
                       "docker-compose down",
                       "docker-compose up -d",
                       "echo ====== MySQL 준비 대기 ======",
@@ -107,6 +109,7 @@ jobs:
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters commands='[
                       "echo ====== Docker 상태 확인 ======",
+                      "export PATH=/usr/bin:/usr/local/bin:$PATH",
                       "docker ps",
                       "echo ====== Spring Boot 로그 확인 ======",
                       "docker logs --tail 20 app",
@@ -158,19 +161,16 @@ jobs:
                         --output text;
                       exit 1;
                     }
-
                   echo "SSM 명령어 결과 (표준 출력):"
                   aws ssm get-command-invocation \
                     --command-id "$COMMAND_ID" \
                     --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
                     --query "StandardOutputContent" \
                     --output text
-
                   echo "SSM 명령어 결과 (에러 출력):"
                   aws ssm get-command-invocation \
                     --command-id "$COMMAND_ID" \
                     --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
                     --query "StandardErrorContent" \
                     --output text
-
                   echo "Spring Boot API 상태 확인 완료."
