@@ -119,9 +119,9 @@ jobs:
                       "echo ====== Docker 컨테이너 상태 확인 ======",
                       "sudo docker ps",
                       "echo ====== app 컨테이너 로그 확인 ======",
-                      "sudo docker compose logs app --tail=20",
+                      "sudo docker compose logs app | tail -n 20",
                       "echo ====== mysql 컨테이너 로그 확인 ======",
-                      "sudo docker compose logs mysql --tail=20"
+                      "sudo docker compose logs mysql | tail -n 20"
                     ]' \
                     --comment "Docker 상태 및 로그 확인" \
                     --query "Command.CommandId" \
