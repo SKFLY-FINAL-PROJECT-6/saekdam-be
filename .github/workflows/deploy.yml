@@ -77,8 +77,8 @@ jobs:
                       "./gradlew clean build -x test",
                       "echo ====== Docker 컨테이너 재시작 ======",
                       "export PATH=/usr/bin:/usr/local/bin:$PATH",
-                      "docker-compose down",
-                      "docker-compose up -d",
+                      "sudo docker-compose down",
+                      "sudo docker-compose up -d",
                       "echo ====== MySQL 준비 대기 ======",
                       "sleep 10"
                     ]' \
@@ -110,11 +110,11 @@ jobs:
                     --parameters commands='[
                       "echo ====== Docker 상태 확인 ======",
                       "export PATH=/usr/bin:/usr/local/bin:$PATH",
-                      "docker ps",
+                      "sudo docker ps",
                       "echo ====== Spring Boot 로그 확인 ======",
-                      "docker logs --tail 20 app",
+                      "sudo docker logs --tail 20 app",
                       "echo ====== MySQL 로그 확인 ======",
-                      "docker logs --tail 20 mysql"
+                      "sudo docker logs --tail 20 mysql"
                     ]' \
                     --comment "Docker 상태 및 로그 확인" \
                     --query "Command.CommandId" \
