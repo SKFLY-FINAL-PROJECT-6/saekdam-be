@@ -9,9 +9,9 @@ services:
             - .:/app
             - ~/.gradle:/root/.gradle
         environment:
-            - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mydatabase
-            - SPRING_DATASOURCE_USERNAME=myuser
-            - SPRING_DATASOURCE_PASSWORD=mypassword
+            - SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+            - SPRING_DATASOURCE_USERNAME=${DB_USER}
+            - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
             - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
             - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
             - AWS_S3_REGION=${AWS_S3_REGION}
@@ -26,10 +26,10 @@ services:
     mysql:
         image: mysql:8.0
         environment:
-            MYSQL_ROOT_PASSWORD: rootpassword
-            MYSQL_DATABASE: mydatabase
-            MYSQL_USER: myuser
-            MYSQL_PASSWORD: mypassword
+            MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${DB_NAME}
+            MYSQL_USER: ${DB_USER}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
         ports:
             - '3306:3306'
         volumes:
