@@ -24,17 +24,36 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            - name: Deploy using SSM Run Command
+            - name: Deploy and Check Docker Status
               run: |
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
-                    --parameters 'commands=[
+                    --parameters commands='[
+                      "echo ====== DEPLOY START ======",
                       "cd /home/ec2-user/app",
+                      "echo ====== Pulling latest code ======",
                       "git pull origin main",
+                      "echo ====== Building Spring Boot app ======",
                       "chmod +x gradlew",
                       "./gradlew clean build -x test",
+                      "echo ====== Restarting Docker containers ======",
                       "docker-compose down",
-                      "docker-compose up -d"
+                      "docker-compose up -d",
+                      "echo ====== Checking Docker Status ======",
+                      "docker ps",
+                      "echo ====== Checking Spring Boot Logs ======",
+                      "docker logs --tail 20 app",
+                      "echo ====== Checking MySQL Logs ======",
+                      "docker logs --tail 20 mysql",
+                      "echo ====== Checking Spring Boot API Health ======",
+                      "curl -I http://localhost:8080 || echo Spring Boot is not responding"
                     ]' \
-                    --comment "Deploy Spring Boot & MySQL via SSM"
+                    --comment "Deploy and check Docker status" \
+                    --query "Command.CommandId" \
+                    --output text
+
+            - name: Retrieve Command Logs
+              run: |
+                  COMMAND_ID=$(aws ssm list-commands --query "Commands[0].CommandId" --output text)
+                  aws ssm get-command-invocation --command-id $COMMAND_ID --instance-id ${{ secrets.EC2_INSTANCE_ID }} --query "StandardOutputContent" --output text
