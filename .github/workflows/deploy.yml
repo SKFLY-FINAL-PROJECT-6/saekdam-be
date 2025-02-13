@@ -3,7 +3,7 @@ name: EC2 배포 (SSM 이용)
 on:
     push:
         branches:
-            - main # main 브랜치에 push 시 실행
+            - main
 
 permissions:
     id-token: write
@@ -24,7 +24,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # 1. EC2 환경 준비: Docker와 Java 설치 및 설정 (Docker Compose는 Docker에 내장됨)
+            # 1. EC2 환경 준비: Docker와 Java 설치 및 설정 (내장 Docker Compose 사용)
             - name: EC2 환경 준비 (SSM 명령어 실행)
               run: |
                   echo "EC2 환경 준비 시작 (Docker 및 Java 설치)..."
@@ -48,7 +48,7 @@ jobs:
                       "sudo chown ec2-user:ec2-user /home/ec2-user/app",
                       "echo ====== Docker 버전 확인 ======",
                       "docker --version",
-                      "echo ====== Docker Compose 버전 확인 (내장된 compose 사용) ======",
+                      "echo ====== Docker Compose 버전 확인 내장된 compose 사용 ======",
                       "docker compose version || true"
                     ]' \
                     --comment "EC2 환경 준비 (Docker, Java 설치)" \
