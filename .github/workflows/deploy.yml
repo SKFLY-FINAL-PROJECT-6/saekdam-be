@@ -24,24 +24,33 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # 1. EC2 환경 준비: 필수 패키지 설치 및 환경 설정
+            # 1. EC2 환경 준비: Docker, Docker Compose, Java 설치 및 설정
             - name: EC2 환경 준비 (SSM 명령어 실행)
               run: |
-                  echo "EC2 환경 준비 시작..."
+                  echo "EC2 환경 준비 시작 (Docker 및 Docker Compose 설치 포함)..."
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters commands='[
-                      "echo ====== 필수 패키지 설치 시작 ======",
+                      "echo ====== 필수 패키지 업데이트 ======",
                       "sudo yum update -y",
-                      "sudo yum install -y git docker docker-compose java-17-amazon-corretto",
+                      "echo ====== Docker, Docker Compose, Java 설치 ======",
+                      "sudo amazon-linux-extras install docker -y",
+                      "sudo yum install -y docker-compose java-17-amazon-corretto",
+                      "echo ====== Docker 서비스 시작 및 활성화 ======",
                       "sudo systemctl start docker",
                       "sudo systemctl enable docker",
+                      "echo ====== ec2-user에 Docker 권한 부여 ======",
                       "sudo usermod -aG docker ec2-user",
+                      "echo ====== 작업 디렉토리 생성 ======",
                       "mkdir -p /home/ec2-user/app",
-                      "sudo chown ec2-user:ec2-user /home/ec2-user/app"
+                      "sudo chown ec2-user:ec2-user /home/ec2-user/app",
+                      "echo ====== Docker 버전 확인 ======",
+                      "docker --version",
+                      "echo ====== Docker Compose 버전 확인 ======",
+                      "docker-compose --version"
                     ]' \
-                    --comment "EC2 환경 준비" \
+                    --comment "EC2 환경 준비 및 Docker 설치" \
                     --query "Command.CommandId" \
                     --output text)
 
@@ -59,7 +68,7 @@ jobs:
                     }
                   echo "EC2 환경 준비 완료."
 
-            # 2. 애플리케이션 배포 및 실행
+            # 2. 애플리케이션 배포 및 실행 (git pull, 빌드, docker-compose 실행)
             - name: 애플리케이션 배포 및 실행 (SSM 명령어 실행)
               run: |
                   echo "애플리케이션 배포 시작..."
@@ -73,10 +82,8 @@ jobs:
                       "git pull origin main",
                       "echo ====== Spring Boot 애플리케이션 빌드 ======",
                       "chmod +x gradlew",
-                      "export PATH=/usr/bin:/usr/local/bin:$PATH",
                       "./gradlew clean build -x test",
                       "echo ====== Docker 컨테이너 재시작 ======",
-                      "export PATH=/usr/bin:/usr/local/bin:$PATH",
                       "sudo docker-compose down",
                       "sudo docker-compose up -d",
                       "echo ====== MySQL 준비 대기 ======",
@@ -109,7 +116,6 @@ jobs:
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters commands='[
                       "echo ====== Docker 상태 확인 ======",
-                      "export PATH=/usr/bin:/usr/local/bin:$PATH",
                       "sudo docker ps",
                       "echo ====== Spring Boot 로그 확인 ======",
                       "sudo docker logs --tail 20 app",
