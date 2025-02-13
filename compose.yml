@@ -16,6 +16,7 @@ services:
             - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
             - AWS_S3_REGION=${AWS_REGION}
             - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+            - JWT_SECRET=${JWT_SECRET}
         command: ['java', '-jar', 'build/libs/demo-0.0.1-SNAPSHOT.jar']
         depends_on:
             mysql:
@@ -26,7 +27,7 @@ services:
     mysql:
         image: mysql:8.0
         environment:
-            MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
             MYSQL_DATABASE: ${DB_NAME}
             MYSQL_USER: ${DB_USER}
             MYSQL_PASSWORD: ${DB_PASSWORD}
