@@ -24,10 +24,10 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # 1. EC2 환경 준비: Docker, Docker Compose, Java 설치 및 설정
+            # 1. EC2 환경 준비: Docker와 Java 설치 및 설정 (Docker Compose는 Docker에 내장됨)
             - name: EC2 환경 준비 (SSM 명령어 실행)
               run: |
-                  echo "EC2 환경 준비 시작 (Docker 및 Docker Compose 설치 포함)..."
+                  echo "EC2 환경 준비 시작 (Docker 및 Java 설치)..."
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
@@ -35,12 +35,10 @@ jobs:
                       "echo ====== 필수 패키지 업데이트 ======",
                       "sudo yum update -y",
                       "echo ====== Docker와 Java 설치 ======",
-                      "sudo yum install -y docker java-17-amazon-corretto || sudo yum install -y docker java-1.8.0-openjdk",
-                      "echo ====== Docker Compose 설치 ======",
-                      "sudo curl -L \"https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose",
-                      "sudo chmod +x /usr/local/bin/docker-compose",
-                      "echo ====== Docker 서비스 시작 및 활성화 ======",
-                      "sudo service docker start || true",
+                      "sudo yum install -y docker java-17-amazon-corretto",
+                      "echo ====== Docker 서비스 시작 ======",
+                      "sudo service docker start",
+                      "echo ====== Docker 서비스 활성화 (chkconfig) ======",
                       "sudo chkconfig docker on || true",
                       "echo ====== docker 그룹 생성 및 ec2-user 권한 부여 ======",
                       "sudo groupadd docker || true",
@@ -50,10 +48,10 @@ jobs:
                       "sudo chown ec2-user:ec2-user /home/ec2-user/app",
                       "echo ====== Docker 버전 확인 ======",
                       "docker --version",
-                      "echo ====== Docker Compose 버전 확인 ======",
-                      "docker-compose --version"
+                      "echo ====== Docker Compose 버전 확인 (내장된 compose 사용) ======",
+                      "docker compose version || true"
                     ]' \
-                    --comment "EC2 환경 준비 및 Docker 설치" \
+                    --comment "EC2 환경 준비 (Docker, Java 설치)" \
                     --query "Command.CommandId" \
                     --output text)
 
@@ -71,7 +69,7 @@ jobs:
                     }
                   echo "EC2 환경 준비 완료."
 
-            # 2. 애플리케이션 배포 및 실행 (git pull, 빌드, docker-compose 실행)
+            # 2. 애플리케이션 배포 및 실행 (git pull, 빌드, Docker Compose 명령어 실행)
             - name: 애플리케이션 배포 및 실행 (SSM 명령어 실행)
               run: |
                   echo "애플리케이션 배포 시작..."
@@ -86,9 +84,9 @@ jobs:
                       "echo ====== Spring Boot 애플리케이션 빌드 ======",
                       "chmod +x gradlew",
                       "./gradlew clean build -x test",
-                      "echo ====== Docker 컨테이너 재시작 ======",
-                      "sudo docker-compose down",
-                      "sudo docker-compose up -d",
+                      "echo ====== Docker Compose로 컨테이너 재시작 ======",
+                      "sudo docker compose down",
+                      "sudo docker compose up -d",
                       "echo ====== MySQL 준비 대기 ======",
                       "sleep 10"
                     ]' \
@@ -118,12 +116,12 @@ jobs:
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters commands='[
-                      "echo ====== Docker 상태 확인 ======",
+                      "echo ====== Docker 컨테이너 상태 확인 ======",
                       "sudo docker ps",
-                      "echo ====== Spring Boot 로그 확인 ======",
-                      "sudo docker logs --tail 20 app",
-                      "echo ====== MySQL 로그 확인 ======",
-                      "sudo docker logs --tail 20 mysql"
+                      "echo ====== app 컨테이너 로그 확인 ======",
+                      "sudo docker compose logs app --tail 20",
+                      "echo ====== mysql 컨테이너 로그 확인 ======",
+                      "sudo docker compose logs mysql --tail 20"
                     ]' \
                     --comment "Docker 상태 및 로그 확인" \
                     --query "Command.CommandId" \
