@@ -38,7 +38,7 @@ jobs:
                       "sudo yum install -y docker java-17-amazon-corretto",
                       "echo ====== Docker 서비스 시작 ======",
                       "sudo service docker start",
-                      "echo ====== Docker 서비스 활성화 (chkconfig) ======",
+                      "echo ====== Docker 서비스 활성화 chkconfig ======",
                       "sudo chkconfig docker on || true",
                       "echo ====== docker 그룹 생성 및 ec2-user 권한 부여 ======",
                       "sudo groupadd docker || true",
