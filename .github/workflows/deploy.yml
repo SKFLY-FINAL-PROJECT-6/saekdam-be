@@ -17,16 +17,41 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v3
 
-            # AWS 자격 증명 설정
+            # Step 1: AWS Credentials 설정
             - name: Configure AWS credentials
-              uses: aws-actions/configure-aws-credentials@v2
+              uses: aws-actions/configure-aws-credentials@v3
               with:
                   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # AWS SSM을 통해 원격 배포 실행
-            - name: Deploy and Check Docker Status via SSM
+            # Step 2: EC2 환경 준비 (Git, Docker, Java 설치 및 디렉토리 설정)
+            - name: Prepare EC2 Environment via SSM
+              run: |
+                  COMMAND_ID=$(aws ssm send-command \
+                    --document-name "AWS-RunShellScript" \
+                    --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+                    --parameters commands='[
+                      "echo ====== Checking and Installing Required Packages ======",
+                      "sudo yum update -y",
+                      "sudo yum install -y git docker docker-compose java-17-amazon-corretto",
+                      "sudo systemctl start docker",
+                      "sudo systemctl enable docker",
+                      "sudo usermod -aG docker ec2-user",
+                      "mkdir -p /home/ec2-user/app",
+                      "sudo chown ec2-user:ec2-user /home/ec2-user/app"
+                    ]' \
+                    --comment "Prepare EC2 Environment" \
+                    --query "Command.CommandId" \
+                    --output text)
+
+                  echo "Waiting for SSM command to complete..."
+                  aws ssm wait command-executed \
+                    --command-id "$COMMAND_ID" \
+                    --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
+
+            # Step 3: 애플리케이션 배포 및 실행
+            - name: Deploy and Run Application via SSM
               run: |
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
@@ -43,17 +68,51 @@ jobs:
                       "docker-compose down",
                       "docker-compose up -d",
                       "echo ====== Waiting for MySQL to be ready ======",
-                      "sleep 10",
+                      "sleep 10"
+                    ]' \
+                    --comment "Deploy and run application" \
+                    --query "Command.CommandId" \
+                    --output text)
+
+                  echo "Waiting for SSM command to complete..."
+                  aws ssm wait command-executed \
+                    --command-id "$COMMAND_ID" \
+                    --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
+
+            # Step 4: Docker 상태 및 로그 확인
+            - name: Check Docker Status via SSM
+              run: |
+                  COMMAND_ID=$(aws ssm send-command \
+                    --document-name "AWS-RunShellScript" \
+                    --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+                    --parameters commands='[
                       "echo ====== Checking Docker Status ======",
                       "docker ps",
                       "echo ====== Checking Spring Boot Logs ======",
                       "docker logs --tail 20 app",
                       "echo ====== Checking MySQL Logs ======",
-                      "docker logs --tail 20 mysql",
+                      "docker logs --tail 20 mysql"
+                    ]' \
+                    --comment "Check Docker status and logs" \
+                    --query "Command.CommandId" \
+                    --output text)
+
+                  echo "Waiting for SSM command to complete..."
+                  aws ssm wait command-executed \
+                    --command-id "$COMMAND_ID" \
+                    --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
+
+            # Step 5: Spring Boot 상태 확인
+            - name: Check Spring Boot API Health via SSM
+              run: |
+                  COMMAND_ID=$(aws ssm send-command \
+                    --document-name "AWS-RunShellScript" \
+                    --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+                    --parameters commands='[
                       "echo ====== Checking Spring Boot API Health ======",
                       "curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/actuator/health || echo Spring Boot is not responding"
                     ]' \
-                    --comment "Deploy and check Docker status" \
+                    --comment "Check Spring Boot API health" \
                     --query "Command.CommandId" \
                     --output text)
 
