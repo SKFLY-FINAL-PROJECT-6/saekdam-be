@@ -24,7 +24,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # 1. EC2 환경 준비: Docker와 Java 설치 및 설정 (내장 Docker Compose 사용)
+            # 1. EC2 환경 준비: Docker와 Java 설치
             - name: EC2 환경 준비 (SSM 명령어 실행)
               run: |
                   echo "EC2 환경 준비 시작 (Docker 및 Java 설치)..."
@@ -38,7 +38,6 @@ jobs:
                       "sudo yum install -y docker java-17-amazon-corretto",
                       "echo ====== Docker 서비스 시작 ======",
                       "sudo service docker start",
-                      "echo ====== Docker 서비스 활성화 chkconfig ======",
                       "sudo chkconfig docker on || true",
                       "echo ====== docker 그룹 생성 및 ec2-user 권한 부여 ======",
                       "sudo groupadd docker || true",
@@ -48,7 +47,7 @@ jobs:
                       "sudo chown ec2-user:ec2-user /home/ec2-user/app",
                       "echo ====== Docker 버전 확인 ======",
                       "docker --version",
-                      "echo ====== Docker Compose 버전 확인 내장된 compose 사용 ======",
+                      "echo ====== Docker Compose 버전 확인 (내장 Compose) ======",
                       "docker compose version || true"
                     ]' \
                     --comment "EC2 환경 준비 (Docker, Java 설치)" \
@@ -69,7 +68,7 @@ jobs:
                     }
                   echo "EC2 환경 준비 완료."
 
-            # 2. 애플리케이션 배포 및 실행 (git pull, 빌드, Docker Compose 명령어 실행)
+            # 2. 애플리케이션 배포 및 실행
             - name: 애플리케이션 배포 및 실행 (SSM 명령어 실행)
               run: |
                   echo "애플리케이션 배포 시작..."
@@ -88,7 +87,7 @@ jobs:
                       "sudo docker compose down",
                       "sudo docker compose up -d",
                       "echo ====== MySQL 준비 대기 ======",
-                      "sleep 10"
+                      "sleep 15"
                     ]' \
                     --comment "애플리케이션 배포 및 실행" \
                     --query "Command.CommandId" \
@@ -108,7 +107,7 @@ jobs:
                     }
                   echo "애플리케이션 배포 완료."
 
-            # 3. Docker 상태 및 로그 확인
+            # 3. Docker 상태 및 로그 확인 (더 자세한 로그 수집)
             - name: Docker 상태 및 로그 확인 (SSM 명령어 실행)
               run: |
                   echo "Docker 상태 및 로그 확인 시작..."
@@ -116,12 +115,10 @@ jobs:
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters commands='[
-                      "echo ====== Docker 컨테이너 상태 확인 ======",
-                      "sudo docker ps",
-                      "echo ====== app 컨테이너 로그 확인 ======",
-                      "sudo docker compose logs app | tail -n 20",
-                      "echo ====== mysql 컨테이너 로그 확인 ======",
-                      "sudo docker compose logs mysql | tail -n 20"
+                      "echo ====== Docker ps -a ======",
+                      "sudo docker ps -a",
+                      "echo ====== 모든 컨테이너 로그 (마지막 100줄) ======",
+                      "for cid in $(sudo docker ps -aq); do echo --- LOGS FOR $cid ---; sudo docker logs $cid --tail 100; echo ========================================; done"
                     ]' \
                     --comment "Docker 상태 및 로그 확인" \
                     --query "Command.CommandId" \
@@ -139,6 +136,21 @@ jobs:
                         --output text;
                       exit 1;
                     }
+
+                  echo "==== (표준 출력) Docker 상태 및 로그 ===="
+                  aws ssm get-command-invocation \
+                    --command-id "$COMMAND_ID" \
+                    --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+                    --query "StandardOutputContent" \
+                    --output text
+
+                  echo "==== (에러 출력) Docker 상태 및 로그 ===="
+                  aws ssm get-command-invocation \
+                    --command-id "$COMMAND_ID" \
+                    --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+                    --query "StandardErrorContent" \
+                    --output text
+
                   echo "Docker 상태 및 로그 확인 완료."
 
             # 4. Spring Boot API 상태 확인
@@ -168,16 +180,19 @@ jobs:
                         --output text;
                       exit 1;
                     }
-                  echo "SSM 명령어 결과 (표준 출력):"
+
+                  echo "==== (표준 출력) Spring Boot API 상태 ===="
                   aws ssm get-command-invocation \
                     --command-id "$COMMAND_ID" \
                     --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
                     --query "StandardOutputContent" \
                     --output text
-                  echo "SSM 명령어 결과 (에러 출력):"
+
+                  echo "==== (에러 출력) Spring Boot API 상태 ===="
                   aws ssm get-command-invocation \
                     --command-id "$COMMAND_ID" \
                     --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
                     --query "StandardErrorContent" \
                     --output text
+
                   echo "Spring Boot API 상태 확인 완료."
