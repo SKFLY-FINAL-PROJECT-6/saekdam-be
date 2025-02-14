@@ -30,7 +30,8 @@ jobs:
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
-                    --parameters '{"commands":[
+                    --parameters '{
+                      "commands":[
                         "sudo yum update -y",
                         "sudo yum install -y docker docker-compose-plugin java-17-amazon-corretto git",
                         "sudo systemctl start docker",
@@ -38,7 +39,8 @@ jobs:
                         "sudo usermod -aG docker ec2-user",
                         "mkdir -p /home/ec2-user/app",
                         "sudo chown ec2-user:ec2-user /home/ec2-user/app"
-                    ]}'
+                      ]
+                    }'
 
             # 2. 애플리케이션 배포 및 실행
             - name: 애플리케이션 배포 및 실행
@@ -46,18 +48,19 @@ jobs:
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
-                    --parameters '{"commands":[
+                    --parameters '{
+                      "commands":[
                         "cd /home/ec2-user",
                         "rm -rf app",
                         "git clone https://github.com/typingmistake/saekdam-be.git app",
                         "cd /home/ec2-user/app",
-                        "sudo chown -R ec2-user:ec2-user /home/ec2-user/app",
-                        "chmod -R 755 /home/ec2-user/app",
-                        "chmod +x gradlew",
                         "mkdir -p .gradle",
-                        "sudo chown -R ec2-user:ec2-user .gradle",
-                        "chmod -R 755 .gradle",
-                        "./gradlew clean build -x test",
+                        "sudo chown -R ec2-user:ec2-user /home/ec2-user/app",
+                        "sudo chown -R ec2-user:ec2-user /home/ec2-user/app/.gradle",
+                        "sudo chmod -R 777 /home/ec2-user/app/.gradle",
+                        "chmod +x gradlew",
+                        "rm -rf .gradle/8.11.1",
+                        "GRADLE_USER_HOME=/home/ec2-user/app/.gradle ./gradlew clean build -x test",
                         "echo \"DB_HOST=mysql\" > .env",
                         "echo \"DB_PORT=3306\" >> .env",
                         "echo \"DB_NAME=mydatabase\" >> .env",
@@ -70,4 +73,5 @@ jobs:
                         "echo \"JWT_SECRET=${{ secrets.JWT_SECRET }}\" >> .env",
                         "sudo docker compose down",
                         "sudo docker compose --env-file .env up -d"
-                    ]}'
+                      ]
+                    }'
