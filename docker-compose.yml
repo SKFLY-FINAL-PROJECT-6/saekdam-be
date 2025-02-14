@@ -3,21 +3,10 @@ version: '3.8'
 services:
     app:
         build: .
-        image: typingmistake/saekdam-be:latest # Docker Hub 이미지와 동일하게 유지
+        image: sunbeen/saekdam-be:latest # Docker Hub에 푸시할 이미지 이름
         container_name: app-app
         ports:
             - '8080:8080'
-        environment:
-            - SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-            - SPRING_DATASOURCE_USERNAME=${DB_USER}
-            - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-            - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-            - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-            - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
-            - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
-            - AWS_S3_REGION=${AWS_REGION}
-            - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-            - JWT_SECRET=${JWT_SECRET}
         depends_on:
             mysql:
                 condition: service_healthy
@@ -27,11 +16,6 @@ services:
     mysql:
         image: mysql:8.0
         container_name: app-mysql
-        environment:
-            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-            MYSQL_DATABASE: ${DB_NAME}
-            MYSQL_USER: ${DB_USER}
-            MYSQL_PASSWORD: ${DB_PASSWORD}
         ports:
             - '3306:3306'
         volumes:
