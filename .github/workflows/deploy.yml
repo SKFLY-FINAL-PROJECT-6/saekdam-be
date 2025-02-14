@@ -16,24 +16,19 @@ jobs:
             - name: 리포지토리 체크아웃
               uses: actions/checkout@v3
 
-            - name: Docker 및 Docker Compose 설치
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y moby-engine moby-cli docker-compose-plugin
-                  sudo systemctl enable --now docker
-                  sudo usermod -aG docker $USER
-                  newgrp docker
-
             - name: Docker Hub 로그인
               uses: docker/login-action@v2
               with:
                   username: ${{ secrets.DOCKER_USERNAME }}
                   password: ${{ secrets.DOCKER_PASSWORD }}
 
-            - name: Docker 이미지 빌드 및 푸시
+            - name: Docker 이미지 빌드 (앱만 빌드)
               run: |
-                  docker compose build
-                  docker compose push
+                  docker build -t typingmistake/saekdam-be:latest .
+
+            - name: Docker Hub에 푸시 (앱만 푸시)
+              run: |
+                  docker push typingmistake/saekdam-be:latest
 
     deploy:
         needs: build-and-push
@@ -46,7 +41,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            - name: EC2에서 최신 이미지 pull 및 배포
+            - name: EC2에서 최신 이미지 pull 및 배포 (S3 환경변수 추가됨)
               run: |
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
@@ -63,14 +58,12 @@ jobs:
                       \"echo \\\"DB_NAME=${{ secrets.DB_NAME }}\\\" >> /home/ec2-user/app/.env\",\
                       \"echo \\\"DB_USER=${{ secrets.DB_USER }}\\\" >> /home/ec2-user/app/.env\",\
                       \"echo \\\"DB_PASSWORD=${{ secrets.DB_PASSWORD }}\\\" >> /home/ec2-user/app/.env\",\
-                      \"echo \\\"AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}\\\" >> /home/ec2-user/app/.env\",\
-                      \"echo \\\"AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}\\\" >> /home/ec2-user/app/.env\",\
                       \"echo \\\"AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}\\\" >> /home/ec2-user/app/.env\",\
                       \"echo \\\"AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}\\\" >> /home/ec2-user/app/.env\",\
-                      \"echo \\\"AWS_S3_REGION=${{ secrets.AWS_REGION }}\\\" >> /home/ec2-user/app/.env\",\
+                      \"echo \\\"AWS_REGION=${{ secrets.AWS_REGION }}\\\" >> /home/ec2-user/app/.env\",\
                       \"echo \\\"AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}\\\" >> /home/ec2-user/app/.env\",\
                       \"echo \\\"JWT_SECRET=${{ secrets.JWT_SECRET }}\\\" >> /home/ec2-user/app/.env\",\
-                      \"sudo docker pull sunbeen/saekdam-be:latest\",\
+                      \"docker pull typingmistake/saekdam-be:latest\",\
                       \"sudo docker compose --env-file /home/ec2-user/app/.env -f /home/ec2-user/app/docker-compose.yml down\",\
                       \"sudo docker compose --env-file /home/ec2-user/app/.env -f /home/ec2-user/app/docker-compose.yml up -d\"\
                     ]}"
