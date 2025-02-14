@@ -24,42 +24,39 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # 1. EC2 환경 준비 (Docker & Java 설치)
-            - name: EC2 환경 준비 (Docker & Java)
+            # 1. EC2 환경 준비 (Docker, Java, Git 설치)
+            - name: EC2 환경 준비 (Docker & Java 설치)
               run: |
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters '{
-                      "commands":[
+                      "commands": [
                         "sudo yum update -y",
                         "sudo yum install -y docker docker-compose-plugin java-17-amazon-corretto git",
                         "sudo systemctl start docker",
                         "sudo systemctl enable docker",
                         "sudo usermod -aG docker ec2-user",
-                        "mkdir -p /home/ec2-user/app",
-                        "sudo chown ec2-user:ec2-user /home/ec2-user/app"
+                        "mkdir -p /home/ec2-user"
                       ]
                     }'
 
-            # 2. 애플리케이션 배포 및 실행
-            - name: 애플리케이션 배포 및 실행
+            # 2. 애플리케이션 전체 삭제 후 재배포 및 빌드
+            - name: 애플리케이션 전체 삭제 및 재배포, 빌드
               run: |
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters '{
-                      "commands":[
+                      "commands": [
                         "cd /home/ec2-user",
-                        "rm -rf app",
+                        "sudo rm -rf app",                                       # 기존 전체 앱 디렉토리 삭제
                         "git clone https://github.com/typingmistake/saekdam-be.git app",
-                        "cd /home/ec2-user/app",
-                        "rm -rf ~/.gradle",
-                        "sudo rm -rf .gradle",
-                        "sudo chown -R ec2-user:ec2-user /home/ec2-user/app",
-                        "sudo chmod -R 777 /home/ec2-user/app", 
+                        "cd app",
+                        "sudo rm -rf .gradle",                                    # Gradle 캐시 삭제
+                        "sudo chmod -R 777 /home/ec2-user/app",                  # 전체 앱 디렉토리에 777 권한 부여 (테스트용)",
                         "chmod +x gradlew",
-                        "./gradlew clean build -x test --no-daemon",
+                        "./gradlew clean build -x test --rerun-tasks",            # 완전 새로 빌드
                         "echo \"DB_HOST=mysql\" > .env",
                         "echo \"DB_PORT=3306\" >> .env",
                         "echo \"DB_NAME=mydatabase\" >> .env",
