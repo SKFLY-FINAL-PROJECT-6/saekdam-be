@@ -19,7 +19,8 @@ jobs:
             - name: Docker Compose 설치
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y docker-compose-plugin
+                  sudo apt-get install -y docker
+                  pip install docker-compose
 
             - name: Docker Hub 로그인
               uses: docker/login-action@v2
