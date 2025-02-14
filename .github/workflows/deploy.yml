@@ -24,11 +24,11 @@ jobs:
 
             - name: Docker 이미지 빌드 (앱만 빌드)
               run: |
-                  docker build -t typingmistake/saekdam-be:latest .
+                  docker build -t sunbeen/saekdam-be:latest .
 
             - name: Docker Hub에 푸시 (앱만 푸시)
               run: |
-                  docker push typingmistake/saekdam-be:latest
+                  docker push sunbeen/saekdam-be:latest
 
     deploy:
         needs: build-and-push
