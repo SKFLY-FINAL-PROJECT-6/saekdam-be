@@ -33,7 +33,7 @@ jobs:
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters commands='[
                       "sudo yum update -y",
-                      "sudo yum install -y docker java-17-amazon-corretto",
+                      "sudo yum install -y docker java-17-amazon-corretto git",
                       "sudo service docker start",
                       "sudo chkconfig docker on || true",
                       "sudo groupadd docker || true",
@@ -58,11 +58,13 @@ jobs:
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters commands='[
+                      "cd /home/ec2-user",
+                      "[[ -d app/.git ]] && (cd app && git pull origin main) || git clone https://github.com/typingmistake/saekdam-be.git app",
                       "cd /home/ec2-user/app",
-                      "git pull origin main",
                       "chmod +x gradlew",
                       "./gradlew clean build -x test",
-                      "sudo docker compose down",
+                      "[[ -f docker-compose.yml ]] || echo docker-compose.yml 없음!",
+                      "sudo docker compose down || echo No containers to stop.",
                       "sudo docker compose up -d",
                       "echo Spring Boot 시작 대기 60초...",
                       "sleep 60"
