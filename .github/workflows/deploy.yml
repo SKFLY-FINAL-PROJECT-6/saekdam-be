@@ -34,9 +34,8 @@ jobs:
                     --parameters 'commands=[
                       "sudo yum update -y",
                       "sudo yum install -y docker docker-compose-plugin java-17-amazon-corretto git",
-                      "sudo service docker start",
-                      "sudo chkconfig docker on || true",
-                      "sudo groupadd docker || true",
+                      "sudo systemctl start docker",
+                      "sudo systemctl enable docker",
                       "sudo usermod -aG docker ec2-user",
                       "mkdir -p /home/ec2-user/app",
                       "sudo chown ec2-user:ec2-user /home/ec2-user/app"
@@ -48,28 +47,37 @@ jobs:
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 2. Docker Compose 실행 문제 해결
-            - name: EC2 환경 변수 및 Docker Compose 설정
+            # 2. Docker Compose 설치 및 검증
+            - name: Docker Compose 설치 및 검증
               run: |
-                  echo "EC2 환경 변수 및 Docker Compose 설정 시작..."
+                  echo "Docker Compose 설치 및 검증 시작..."
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters 'commands=[
-                      "export PATH=$PATH:/usr/libexec/docker/cli-plugins",
-                      "sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose",
-                      "ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/bin/docker-compose || true",
-                      "docker compose version || echo Docker Compose 실행 불가",
-                      "docker-compose version || echo Docker Compose(v1) 실행 불가"
+                      "if ! docker compose version &>/dev/null; then",
+                      "  echo Docker Compose가 실행되지 않음. 재설치 진행...",
+                      "  sudo yum remove -y docker-compose-plugin",
+                      "  sudo yum install -y docker-compose-plugin",
+                      "  sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose",
+                      "fi",
+                      "if ! docker compose version &>/dev/null; then",
+                      "  echo Docker Compose가 여전히 실행되지 않음. 수동 설치 진행...",
+                      "  mkdir -p ~/.docker/cli-plugins/",
+                      "  curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose",
+                      "  chmod +x ~/.docker/cli-plugins/docker-compose",
+                      "  sudo ln -sf ~/.docker/cli-plugins/docker-compose /usr/bin/docker-compose",
+                      "fi",
+                      "docker compose version || echo Docker Compose 실행 실패"
                     ]' \
-                    --comment "EC2 환경 변수 및 Docker Compose 설정" \
+                    --comment "Docker Compose 설치 및 검증" \
                     --query "Command.CommandId" \
                     --output text)
 
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 3. 기존 `app` 폴더 삭제 후 다시 클론
+            # 3. 애플리케이션 배포 및 실행
             - name: 애플리케이션 배포 및 실행
               run: |
                   echo "애플리케이션 배포 시작..."
