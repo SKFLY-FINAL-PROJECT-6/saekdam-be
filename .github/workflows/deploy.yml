@@ -16,10 +16,12 @@ jobs:
             - name: 리포지토리 체크아웃
               uses: actions/checkout@v3
 
-            - name: Docker Compose 설치
+            - name: Docker 및 Docker Compose 설치
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y docker
+                  sudo apt-get install -y moby-engine moby-cli
+                  sudo systemctl enable --now docker
+                  sudo usermod -aG docker $USER
                   pip install docker-compose
 
             - name: Docker Hub 로그인
