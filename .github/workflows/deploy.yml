@@ -24,7 +24,6 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # 1. EC2 환경 준비 (Docker, Java, Git 설치)
             - name: EC2 환경 준비 (Docker & Java 설치)
               run: |
                   aws ssm send-command \
@@ -41,7 +40,6 @@ jobs:
                       ]
                     }'
 
-            # 2. 애플리케이션 전체 삭제 후 재배포 및 빌드
             - name: 애플리케이션 전체 삭제 및 재배포, 빌드
               run: |
                   aws ssm send-command \
@@ -50,13 +48,13 @@ jobs:
                     --parameters '{
                       "commands": [
                         "cd /home/ec2-user",
-                        "sudo rm -rf app",                                       # 기존 전체 앱 디렉토리 삭제
+                        "sudo rm -rf app",
                         "git clone https://github.com/typingmistake/saekdam-be.git app",
                         "cd app",
-                        "sudo rm -rf .gradle",                                    # Gradle 캐시 삭제
-                        "sudo chmod -R 777 /home/ec2-user/app",                  # 전체 앱 디렉토리에 777 권한 부여 (테스트용)",
+                        "sudo rm -rf .gradle",
+                        "sudo chmod -R 777 /home/ec2-user/app",
                         "chmod +x gradlew",
-                        "./gradlew clean build -x test --rerun-tasks",            # 완전 새로 빌드
+                        "./gradlew clean build -x test --rerun-tasks",
                         "echo \"DB_HOST=mysql\" > .env",
                         "echo \"DB_PORT=3306\" >> .env",
                         "echo \"DB_NAME=mydatabase\" >> .env",
