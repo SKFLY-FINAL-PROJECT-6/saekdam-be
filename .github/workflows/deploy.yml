@@ -60,50 +60,37 @@ jobs:
                     sleep 10
                   done
 
-            # 2. .env 파일 생성 및 업로드
+            # 2. .env 파일 생성 및 EC2 전송
             - name: .env 파일 생성 및 EC2 전송
               run: |
                   echo "환경 변수 설정을 위한 .env 파일 생성..."
-                  cat <<EOF > .env
-                  DB_HOST=${{ secrets.DB_HOST }}
-                  DB_PORT=${{ secrets.DB_PORT }}
-                  DB_NAME=${{ secrets.DB_NAME }}
-                  DB_USER=${{ secrets.DB_USER }}
-                  DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-                  AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}
-                  AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}
-                  AWS_REGION=${{ secrets.AWS_REGION }}
-                  AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
-                  JWT_SECRET=${{ secrets.JWT_SECRET }}
-                  EOF
+                  echo "DB_HOST=${{ secrets.DB_HOST }}" > .env
+                  echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+                  echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+                  echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+                  echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+                  echo "AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}" >> .env
+                  echo "AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}" >> .env
+                  echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+                  echo "AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}" >> .env
+                  echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
 
                   echo "EC2로 .env 파일 전송..."
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters 'commands=[
-                      "export DB_HOST=${{ secrets.DB_HOST }}",
-                      "export DB_PORT=${{ secrets.DB_PORT }}",
-                      "export DB_NAME=${{ secrets.DB_NAME }}",
-                      "export DB_USER=${{ secrets.DB_USER }}",
-                      "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}",
-                      "export AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}",
-                      "export AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}",
-                      "export AWS_REGION=${{ secrets.AWS_REGION }}",
-                      "export AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}",
-                      "export JWT_SECRET=${{ secrets.JWT_SECRET }}",
-                      "cat <<EOF > /home/ec2-user/app/.env",
-                      "DB_HOST=${{ secrets.DB_HOST }}",
-                      "DB_PORT=${{ secrets.DB_PORT }}",
-                      "DB_NAME=${{ secrets.DB_NAME }}",
-                      "DB_USER=${{ secrets.DB_USER }}",
-                      "DB_PASSWORD=${{ secrets.DB_PASSWORD }}",
-                      "AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}",
-                      "AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}",
-                      "AWS_REGION=${{ secrets.AWS_REGION }}",
-                      "AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}",
-                      "JWT_SECRET=${{ secrets.JWT_SECRET }}",
-                      "EOF"
+                      "mkdir -p /home/ec2-user/app",
+                      "echo \"${{ secrets.DB_HOST }}\" > /home/ec2-user/app/.env",
+                      "echo \"${{ secrets.DB_PORT }}\" >> /home/ec2-user/app/.env",
+                      "echo \"${{ secrets.DB_NAME }}\" >> /home/ec2-user/app/.env",
+                      "echo \"${{ secrets.DB_USER }}\" >> /home/ec2-user/app/.env",
+                      "echo \"${{ secrets.DB_PASSWORD }}\" >> /home/ec2-user/app/.env",
+                      "echo \"${{ secrets.AWS_S3_ACCESS_KEY }}\" >> /home/ec2-user/app/.env",
+                      "echo \"${{ secrets.AWS_S3_SECRET_KEY }}\" >> /home/ec2-user/app/.env",
+                      "echo \"${{ secrets.AWS_REGION }}\" >> /home/ec2-user/app/.env",
+                      "echo \"${{ secrets.AWS_S3_BUCKET }}\" >> /home/ec2-user/app/.env",
+                      "echo \"${{ secrets.JWT_SECRET }}\" >> /home/ec2-user/app/.env"
                     ]' \
                     --comment "환경 변수 설정" \
                     --query "Command.CommandId" \
