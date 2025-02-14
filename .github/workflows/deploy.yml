@@ -50,7 +50,7 @@ jobs:
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 2. 애플리케이션 배포 및 실행
+            # 2. 기존 `app` 폴더 삭제 후 다시 클론
             - name: 애플리케이션 배포 및 실행
               run: |
                   echo "애플리케이션 배포 시작..."
@@ -59,7 +59,8 @@ jobs:
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters commands='[
                       "cd /home/ec2-user",
-                      "[[ -d app/.git ]] && (cd app && git pull origin main) || git clone https://github.com/typingmistake/saekdam-be.git app",
+                      "rm -rf app",  # 기존 app 폴더 삭제
+                      "git clone https://github.com/typingmistake/saekdam-be.git app",
                       "cd /home/ec2-user/app",
                       "chmod +x gradlew",
                       "./gradlew clean build -x test",
@@ -76,7 +77,7 @@ jobs:
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 3. **컨테이너 상태 및 Spring Boot 로그 확인**
+            # 3. Docker 컨테이너 상태 및 Spring Boot 로그 확인
             - name: Docker 컨테이너 상태 및 Spring Boot 로그 확인
               run: |
                   echo "Docker 컨테이너 상태 및 Spring Boot 로그 확인 시작..."
@@ -100,7 +101,7 @@ jobs:
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 4. **Spring Boot API 상태 확인**
+            # 4. Spring Boot API 상태 확인
             - name: Spring Boot API 상태 확인
               run: |
                   echo "Spring Boot API 상태 확인 시작..."
