@@ -12,7 +12,6 @@ permissions:
 jobs:
     deploy:
         runs-on: ubuntu-latest
-
         steps:
             - name: 리포지토리 체크아웃
               uses: actions/checkout@v3
@@ -40,7 +39,7 @@ jobs:
                       ]
                     }"
 
-            - name: 전체 삭제 및 삭제 확인
+            - name: 기존 앱 및 캐시 삭제 (삭제 후 확인)
               run: |
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
@@ -53,7 +52,7 @@ jobs:
                       ]
                     }"
 
-            - name: 새 클론 및 처음부터 빌드, 배포
+            - name: 새 클론 및 빌드, 배포
               run: |
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
@@ -72,10 +71,4 @@ jobs:
                         \"echo \\\"DB_PASSWORD=${{ secrets.DB_PASSWORD }}\\\" >> .env\",
                         \"echo \\\"AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}\\\" >> .env\",
                         \"echo \\\"AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}\\\" >> .env\",
-                        \"echo \\\"AWS_S3_REGION=${{ secrets.AWS_REGION }}\\\" >> .env\",
-                        \"echo \\\"AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}\\\" >> .env\",
-                        \"echo \\\"JWT_SECRET=${{ secrets.JWT_SECRET }}\\\" >> .env\",
-                        \"sudo docker compose down\",
-                        \"sudo docker compose --env-file .env up -d\"
-                      ]
-                    }"
+                        \"echo
