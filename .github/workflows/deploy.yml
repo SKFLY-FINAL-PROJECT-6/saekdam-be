@@ -26,10 +26,10 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # 3. EC2 환경 준비
+            # 3. EC2 환경 준비 (Docker, Java 설치, 디렉토리 생성 등)
             - name: EC2 환경 준비 (SSM 명령어 실행)
               run: |
-                  echo "EC2 환경 준비 시작 - Docker와 Java 설치"
+                  echo "EC2 환경 준비 시작"
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
@@ -53,7 +53,7 @@ jobs:
                       "echo ====== Docker Compose 버전 확인 ======",
                       "docker compose version || true"
                     ]' \
-                    --comment "EC2 환경 준비 (Docker, Java 설치)" \
+                    --comment "EC2 환경 준비" \
                     --query "Command.CommandId" \
                     --output text)
 
@@ -71,10 +71,10 @@ jobs:
                     }
                   echo "EC2 환경 준비 완료."
 
-            # 4. 애플리케이션 배포 및 실행
+            # 4. 애플리케이션 배포 및 실행 (docker-compose 등)
             - name: 애플리케이션 배포 및 실행 (SSM 명령어 실행)
               run: |
-                  echo "애플리케이션 배포 시작..."
+                  echo "애플리케이션 배포 시작"
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
@@ -89,8 +89,8 @@ jobs:
                       "echo ====== Docker Compose로 컨테이너 재시작 ======",
                       "sudo docker compose down",
                       "sudo docker compose up -d",
-                      "echo ====== 스프링 부트 시작 대기 30초 ======",
-                      "sleep 30"
+                      "echo ====== 스프링 부트 시작 대기 60초 ======",
+                      "sleep 60"
                     ]' \
                     --comment "애플리케이션 배포 및 실행" \
                     --query "Command.CommandId" \
@@ -113,7 +113,7 @@ jobs:
             # 5. Docker 상태 및 로그 확인
             - name: Docker 상태 및 로그 확인 (SSM 명령어 실행)
               run: |
-                  echo "Docker 상태 및 로그 확인 시작..."
+                  echo "Docker 상태 및 로그 확인 시작"
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
@@ -159,7 +159,7 @@ jobs:
             # 6. Spring Boot API 상태 확인
             - name: Spring Boot API 상태 확인 (SSM 명령어 실행)
               run: |
-                  echo "Spring Boot API 상태 확인 시작..."
+                  echo "Spring Boot API 상태 확인 시작"
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
