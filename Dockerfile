@@ -1,11 +1,11 @@
-# 1. 기본 OpenJDK 17 사용
-FROM openjdk:17
+# 1. OpenJDK 17 (Alpine 기반)
+FROM openjdk:17-alpine
 
 # 2. 작업 디렉토리 설정
 WORKDIR /app
 
-# 3. 시스템 패키지 업데이트 및 xargs 설치
-RUN apt-get update && apt-get install -y findutils
+# 3. xargs 설치 (findutils 포함)
+RUN apk add --no-cache findutils
 
 # 4. 프로젝트 파일 복사
 COPY . .
