@@ -54,11 +54,13 @@ jobs:
                         "rm -rf app",
                         "git clone https://github.com/typingmistake/saekdam-be.git app",
                         "cd /home/ec2-user/app",
-                        "mkdir -p .gradle/8.11.1/fileHashes",
-                        "sudo chown -R ec2-user:ec2-user /home/ec2-user/app",
-                        "chmod -R 775 .gradle",
+                        "rm -rf ~/.gradle",  # 홈 디렉토리의 gradle 캐시 제거
+                        "sudo rm -rf .gradle",  # 프로젝트 디렉토리의 gradle 캐시 제거
+                        "mkdir -p ~/.gradle",  # 홈 디렉토리에 gradle 디렉토리 생성
+                        "sudo chown -R ec2-user:ec2-user ~/.gradle",  # 홈 디렉토리 gradle 소유권 변경
+                        "sudo chmod -R 777 ~/.gradle",  # 임시로 전체 권한 부여
                         "chmod +x gradlew",
-                        "GRADLE_USER_HOME=/home/ec2-user/app/.gradle ./gradlew clean build -x test",
+                        "./gradlew clean build -x test",
                         "echo \"DB_HOST=mysql\" > .env",
                         "echo \"DB_PORT=3306\" >> .env",
                         "echo \"DB_NAME=mydatabase\" >> .env",
