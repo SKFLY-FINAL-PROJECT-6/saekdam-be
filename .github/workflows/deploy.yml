@@ -70,25 +70,33 @@ jobs:
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 3. 환경 변수 전달을 위한 .env 파일 생성 및 업로드
-            - name: .env 파일 생성 및 EC2 업로드
+            # 3. 환경 변수 설정을 위한 `.env` 파일 생성 (AWS SSM 이용, SSH 없이)
+            - name: 환경 변수 설정
               run: |
-                  echo "환경 변수 설정을 위한 .env 파일 생성..."
-                  cat <<EOF > .env
-                  DB_HOST=${{ secrets.DB_HOST }}
-                  DB_PORT=${{ secrets.DB_PORT }}
-                  DB_NAME=${{ secrets.DB_NAME }}
-                  DB_USER=${{ secrets.DB_USER }}
-                  DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-                  AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}
-                  AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}
-                  AWS_REGION=${{ secrets.AWS_REGION }}
-                  AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
-                  JWT_SECRET=${{ secrets.JWT_SECRET }}
-                  EOF
+                  echo "EC2에서 직접 .env 파일 생성..."
+                  COMMAND_ID=$(aws ssm send-command \
+                    --document-name "AWS-RunShellScript" \
+                    --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+                    --parameters 'commands=[
+                      "cat <<EOF > /home/ec2-user/app/.env",
+                      "DB_HOST=${{ secrets.DB_HOST }}",
+                      "DB_PORT=${{ secrets.DB_PORT }}",
+                      "DB_NAME=${{ secrets.DB_NAME }}",
+                      "DB_USER=${{ secrets.DB_USER }}",
+                      "DB_PASSWORD=${{ secrets.DB_PASSWORD }}",
+                      "AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}",
+                      "AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}",
+                      "AWS_REGION=${{ secrets.AWS_REGION }}",
+                      "AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}",
+                      "JWT_SECRET=${{ secrets.JWT_SECRET }}",
+                      "EOF"
+                    ]' \
+                    --comment ".env 파일 생성" \
+                    --query "Command.CommandId" \
+                    --output text)
 
-                  echo "EC2로 .env 파일 전송..."
-                  scp -o StrictHostKeyChecking=no .env ec2-user@${{ secrets.EC2_PUBLIC_IP }}:/home/ec2-user/app/.env
+                  echo "SSM 명령어 실행 ID: $COMMAND_ID"
+                  aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
             # 4. 애플리케이션 배포 및 실행
             - name: 애플리케이션 배포 및 실행
@@ -105,8 +113,8 @@ jobs:
                       "chmod +x gradlew",
                       "./gradlew clean build -x test",
                       "[[ -f docker-compose.yml ]] || echo docker-compose.yml 없음!",
-                      "sudo docker compose down || echo No containers to stop.",
-                      "sudo docker compose --env-file .env up -d",
+                      "sudo docker compose --env-file /home/ec2-user/app/.env down || echo No containers to stop.",
+                      "sudo docker compose --env-file /home/ec2-user/app/.env up -d",
                       "echo Spring Boot 시작 대기 60초...",
                       "sleep 60"
                     ]' \
@@ -117,14 +125,23 @@ jobs:
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 5. 컨테이너 상태 확인 (에러 발생 시 실패 처리)
+            # 5. 컨테이너 상태 확인
             - name: 컨테이너 상태 확인
               run: |
                   echo "컨테이너 상태 확인..."
-                  ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
-                  docker ps -a
-                  if [ $(docker inspect -f '{{.State.Running}}' app-mysql-1) == "false" ]; then
-                    echo "❌ MySQL 컨테이너 실행 실패!"
-                    exit 1
-                  fi
-                  EOF
+                  COMMAND_ID=$(aws ssm send-command \
+                    --document-name "AWS-RunShellScript" \
+                    --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+                    --parameters 'commands=[
+                      "docker ps -a",
+                      "if [ $(docker inspect -f '{{.State.Running}}' app-mysql-1) == false ]; then",
+                      "  echo MySQL 컨테이너 실행 실패!",
+                      "  exit 1",
+                      "fi"
+                    ]' \
+                    --comment "컨테이너 상태 확인" \
+                    --query "Command.CommandId" \
+                    --output text)
+
+                  echo "SSM 명령어 실행 ID: $COMMAND_ID"
+                  aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
