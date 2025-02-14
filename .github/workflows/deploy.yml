@@ -24,11 +24,11 @@ jobs:
 
             - name: Docker 이미지 빌드
               run: |
-                  docker build -t sunbeen/saekdam-be:latest .
+                  docker-compose build
 
             - name: Docker Hub에 푸시
               run: |
-                  docker push sunbeen/saekdam-be:latest
+                  docker-compose push
 
     deploy:
         needs: build-and-push
@@ -65,7 +65,7 @@ jobs:
                       \"echo \\\"AWS_S3_REGION=${{ secrets.AWS_REGION }}\\\" >> /home/ec2-user/app/.env\",\
                       \"echo \\\"AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}\\\" >> /home/ec2-user/app/.env\",\
                       \"echo \\\"JWT_SECRET=${{ secrets.JWT_SECRET }}\\\" >> /home/ec2-user/app/.env\",\
-                      \"docker pull typingmistake/saekdam-be:latest\",\
+                      \"docker pull sunbeen/saekdam-be:latest\",\
                       \"sudo docker compose --env-file /home/ec2-user/app/.env -f /home/ec2-user/app/docker-compose.yml down\",\
                       \"sudo docker compose --env-file /home/ec2-user/app/.env -f /home/ec2-user/app/docker-compose.yml up -d\"\
                     ]}"
