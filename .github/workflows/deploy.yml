@@ -24,7 +24,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # 1. EC2 환경 준비
+            # 1. EC2 환경 준비 (Docker & Java 설치)
             - name: EC2 환경 준비 (Docker & Java)
               run: |
                   echo "EC2 환경 준비 시작..."
@@ -33,7 +33,7 @@ jobs:
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters 'commands=[
                       "sudo yum update -y",
-                      "sudo yum install -y docker java-17-amazon-corretto git",
+                      "sudo yum install -y docker docker-compose-plugin java-17-amazon-corretto git",
                       "sudo service docker start",
                       "sudo chkconfig docker on || true",
                       "sudo groupadd docker || true",
@@ -90,9 +90,9 @@ jobs:
                       "echo 최근 실행된 컨테이너 로그:",
                       "for cid in $(sudo docker ps -aq); do echo --- 컨테이너 $cid ---; sudo docker logs $cid --tail 50; echo =================================; done",
                       "echo Docker Compose 실행 오류 확인:",
-                      "cd /home/ec2-user/app && sudo docker-compose up -d || echo Docker Compose 실행 실패",
+                      "cd /home/ec2-user/app && sudo docker compose up -d || echo Docker Compose 실행 실패",
                       "echo Spring Boot 컨테이너 로그:",
-                      "sudo docker-compose logs --tail 50 || echo Spring Boot 컨테이너 없음"
+                      "sudo docker compose logs --tail 50 || echo Spring Boot 컨테이너 없음"
                     ]' \
                     --comment "Docker 컨테이너 상태 및 Spring Boot 로그 확인" \
                     --query "Command.CommandId" \
