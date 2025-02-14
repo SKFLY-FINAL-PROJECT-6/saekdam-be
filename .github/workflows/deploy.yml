@@ -57,6 +57,7 @@ jobs:
                         "rm -rf ~/.gradle",
                         "sudo rm -rf .gradle",
                         "sudo chown -R ec2-user:ec2-user /home/ec2-user/app",
+                        "sudo chmod -R u+w /home/ec2-user/app/.gradle",
                         "chmod +x gradlew",
                         "./gradlew clean build -x test --no-daemon",
                         "echo \"DB_HOST=mysql\" > .env",
