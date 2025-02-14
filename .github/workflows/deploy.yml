@@ -31,7 +31,7 @@ jobs:
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
-                    --parameters commands='[
+                    --parameters 'commands=[
                       "sudo yum update -y",
                       "sudo yum install -y docker java-17-amazon-corretto git",
                       "sudo service docker start",
@@ -57,9 +57,9 @@ jobs:
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
-                    --parameters commands='[
+                    --parameters 'commands=[
                       "cd /home/ec2-user",
-                      "rm -rf app",  # 기존 app 폴더 삭제
+                      "rm -rf app",
                       "git clone https://github.com/typingmistake/saekdam-be.git app",
                       "cd /home/ec2-user/app",
                       "chmod +x gradlew",
@@ -84,7 +84,7 @@ jobs:
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
-                    --parameters commands='[
+                    --parameters 'commands=[
                       "echo 실행 중인 Docker 컨테이너:",
                       "sudo docker ps -a",
                       "echo 최근 실행된 컨테이너 로그:",
@@ -108,7 +108,7 @@ jobs:
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
-                    --parameters commands='[
+                    --parameters 'commands=[
                       "curl -v http://localhost:8080/actuator/health || echo Spring Boot가 응답하지 않습니다."
                     ]' \
                     --comment "Spring Boot API 상태 확인" \
