@@ -39,10 +39,7 @@ jobs:
                       "sudo groupadd docker || true",
                       "sudo usermod -aG docker ec2-user",
                       "mkdir -p /home/ec2-user/app",
-                      "sudo chown ec2-user:ec2-user /home/ec2-user/app",
-                      "docker --version",
-                      "docker compose version || echo Docker Compose v2 설치 안됨",
-                      "docker-compose --version || echo Docker Compose v1 설치 안됨"
+                      "sudo chown ec2-user:ec2-user /home/ec2-user/app"
                     ]' \
                     --comment "EC2 환경 준비 (Docker, Java 설치)" \
                     --query "Command.CommandId" \
@@ -51,18 +48,21 @@ jobs:
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 2. 환경 변수 설정 (Docker Compose가 실행될 수 있도록 PATH 등록)
-            - name: EC2 환경 변수 설정 (Docker Compose)
+            # 2. Docker Compose 실행 문제 해결
+            - name: EC2 환경 변수 및 Docker Compose 설정
               run: |
-                  echo "EC2 환경 변수 설정 시작..."
+                  echo "EC2 환경 변수 및 Docker Compose 설정 시작..."
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
                     --parameters 'commands=[
                       "export PATH=$PATH:/usr/libexec/docker/cli-plugins",
-                      "docker compose version || echo Docker Compose 실행 불가"
+                      "sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose",
+                      "ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/bin/docker-compose || true",
+                      "docker compose version || echo Docker Compose 실행 불가",
+                      "docker-compose version || echo Docker Compose(v1) 실행 불가"
                     ]' \
-                    --comment "EC2 환경 변수 설정 (Docker Compose)" \
+                    --comment "EC2 환경 변수 및 Docker Compose 설정" \
                     --query "Command.CommandId" \
                     --output text)
 
