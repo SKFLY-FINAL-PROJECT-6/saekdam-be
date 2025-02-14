@@ -47,7 +47,7 @@ jobs:
                       "sudo chown ec2-user:ec2-user /home/ec2-user/app",
                       "echo ====== Docker 버전 확인 ======",
                       "docker --version",
-                      "echo ====== Docker Compose 버전 확인 (내장 Compose) ======",
+                      "echo ====== Docker Compose 버전 확인 - 내장 Compose ======",
                       "docker compose version || true"
                     ]' \
                     --comment "EC2 환경 준비 (Docker, Java 설치)" \
