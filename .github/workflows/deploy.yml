@@ -24,10 +24,10 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            # 1. EC2 환경 준비: Docker와 Java 설치
-            - name: EC2 환경 준비 (SSM 명령어 실행)
+            # 1. EC2 환경 준비
+            - name: EC2 환경 준비 (Docker & Java)
               run: |
-                  echo "EC2 환경 준비 시작"
+                  echo "EC2 환경 준비 시작..."
                   COMMAND_ID=$(aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
                     --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
@@ -51,7 +51,7 @@ jobs:
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
             # 2. 애플리케이션 배포 및 실행
-            - name: 애플리케이션 배포 및 실행 (SSM 명령어 실행)
+            - name: 애플리케이션 배포 및 실행
               run: |
                   echo "애플리케이션 배포 시작..."
                   COMMAND_ID=$(aws ssm send-command \
@@ -74,7 +74,7 @@ jobs:
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 3. Docker 컨테이너 상태 및 Spring Boot 실행 로그 확인
+            # 3. **컨테이너 상태 및 Spring Boot 로그 확인**
             - name: Docker 컨테이너 상태 및 Spring Boot 로그 확인
               run: |
                   echo "Docker 컨테이너 상태 및 Spring Boot 로그 확인 시작..."
@@ -85,11 +85,11 @@ jobs:
                       "echo 실행 중인 Docker 컨테이너:",
                       "sudo docker ps -a",
                       "echo 최근 실행된 컨테이너 로그:",
-                      "sudo docker logs $(sudo docker ps -aq | head -n 1) || echo 실행된 컨테이너 없음",
+                      "for cid in $(sudo docker ps -aq); do echo --- 컨테이너 $cid ---; sudo docker logs $cid --tail 50; echo =================================; done",
                       "echo Docker Compose 실행 오류 확인:",
                       "cd /home/ec2-user/app && sudo docker-compose up -d || echo Docker Compose 실행 실패",
                       "echo Spring Boot 컨테이너 로그:",
-                      "sudo docker-compose logs app --tail 50 || echo Spring Boot 컨테이너 없음"
+                      "sudo docker-compose logs --tail 50 || echo Spring Boot 컨테이너 없음"
                     ]' \
                     --comment "Docker 컨테이너 상태 및 Spring Boot 로그 확인" \
                     --query "Command.CommandId" \
@@ -98,7 +98,7 @@ jobs:
                   echo "SSM 명령어 실행 ID: $COMMAND_ID"
                   aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
 
-            # 4. Spring Boot API 상태 확인
+            # 4. **Spring Boot API 상태 확인**
             - name: Spring Boot API 상태 확인
               run: |
                   echo "Spring Boot API 상태 확인 시작..."
