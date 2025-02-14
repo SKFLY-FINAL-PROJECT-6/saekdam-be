@@ -117,7 +117,7 @@ jobs:
                     --parameters commands='[
                       "echo ====== Docker ps -a ======",
                       "sudo docker ps -a",
-                      "echo ====== 모든 컨테이너 로그 (마지막 100줄) ======",
+                      "echo ====== 모든 컨테이너 로그 - 마지막 100줄 ======",
                       "for cid in $(sudo docker ps -aq); do echo --- LOGS FOR $cid ---; sudo docker logs $cid --tail 100; echo ========================================; done"
                     ]' \
                     --comment "Docker 상태 및 로그 확인" \
