@@ -40,7 +40,7 @@ jobs:
                       ]
                     }'
 
-            - name: 앱 전체 삭제 및 처음부터 빌드
+            - name: 전체 삭제 후 처음부터 새로 빌드
               run: |
                   aws ssm send-command \
                     --document-name "AWS-RunShellScript" \
