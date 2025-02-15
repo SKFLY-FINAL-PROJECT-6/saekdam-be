@@ -21,6 +21,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 @Entity
 @Getter
@@ -29,6 +31,8 @@ import jakarta.persistence.GenerationType;
 @SQLRestriction("deleted_at IS NULL")
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -47,6 +51,7 @@ public class User {
 
     @Column(name = "role")
     @Pattern(regexp = "USER|ADMIN", message = "유저의 역할은 USER 또는 ADMIN이어야 합니다.")
+    @Builder.Default
     private String role = "USER";
 
     @CreatedDate
@@ -58,5 +63,14 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
+    @Builder.Default
     private LocalDateTime deletedAt = null;
+
+    public static User of(String username, String email, String password) {
+        return User.builder()
+                .username(username)
+                .email(email)
+                .password(password)
+                .build();
+    }
 }

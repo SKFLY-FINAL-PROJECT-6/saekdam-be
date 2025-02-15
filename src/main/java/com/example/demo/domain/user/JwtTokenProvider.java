@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import lombok.RequiredArgsConstructor;
 
 public interface JwtTokenProvider {
     String createToken(User user);
@@ -20,6 +21,7 @@ public interface JwtTokenProvider {
 }
 
 @Component
+@RequiredArgsConstructor
 class JwtTokenProviderImpl implements JwtTokenProvider {
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenProviderImpl.class);
 
@@ -28,11 +30,6 @@ class JwtTokenProviderImpl implements JwtTokenProvider {
 
     private final JwtEncoder encoder;
     private final JwtDecoder decoder;
-
-    public JwtTokenProviderImpl(JwtEncoder encoder, JwtDecoder decoder) {
-        this.encoder = encoder;
-        this.decoder = decoder;
-    }
 
     @Override
     public String createToken(User user) {
