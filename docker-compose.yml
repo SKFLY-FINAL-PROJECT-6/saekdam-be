@@ -2,11 +2,17 @@ version: '3.8'
 
 services:
     app:
-        build: .
+        build:
+            context: .
+            dockerfile: Dockerfile
         image: sunbeen/saekdam-be:latest # Docker Hub에 푸시할 이미지 이름
         container_name: app-app
+        env_file:
+            - .env
         ports:
             - '8080:8080'
+        environment:
+            - AWS_S3_REGION=${AWS_REGION}
         depends_on:
             mysql:
                 condition: service_healthy
@@ -16,6 +22,11 @@ services:
     mysql:
         image: mysql:8.0
         container_name: app-mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_DATABASE: ${DB_NAME}
+            MYSQL_USER: ${DB_USER}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
         ports:
             - '3306:3306'
         volumes:

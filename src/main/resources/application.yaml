@@ -51,6 +51,21 @@ jwt:
     secret: ${JWT_SECRET}
     expiration: 86400000
 
+oauth2:
+    # 카카오 OAuth2 설정
+    kakao:
+        client-id: ${KAKAO_CLIENT_ID}
+        redirect-uri: ${KAKAO_REDIRECT_URI}
+
+    # 카카오 API 설정
+    api:
+        kakao:
+            url:
+                profile: https://kapi.kakao.com/v2/user/me
+                email: https://kapi.kakao.com/v2/user/me
+                logout: https://kapi.kakao.com/v1/user/logout
+                unlink: https://kapi.kakao.com/v1/user/unlink
+
 # AWS S3 설정
 cloud:
     aws:
