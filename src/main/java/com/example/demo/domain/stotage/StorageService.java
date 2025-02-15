@@ -1,4 +1,4 @@
-package com.example.demo.common.stotage;
+package com.example.demo.domain.stotage;
 
 import org.springframework.stereotype.Service;
 
