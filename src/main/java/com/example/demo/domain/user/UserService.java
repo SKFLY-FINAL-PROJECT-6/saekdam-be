@@ -30,7 +30,6 @@ public interface UserService {
 @Transactional
 @RequiredArgsConstructor
 class UserServiceImpl implements UserService {
-
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;

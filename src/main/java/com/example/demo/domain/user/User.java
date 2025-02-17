@@ -8,7 +8,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -19,10 +18,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -35,11 +34,9 @@ import lombok.Builder;
 @Builder
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Column(name = "username", unique = true)
-    @Size(min = 2, max = 5, message = "유저이름은 2자 이상 5자 이하여야 합니다.")
     private String username;
 
     @Column(name = "email", unique = true)
@@ -47,7 +44,8 @@ public class User {
     private String email;
 
     @Column(name = "password")
-    private String password;
+    @Builder.Default
+    private String password = null;
 
     @Column(name = "role")
     @Pattern(regexp = "USER|ADMIN", message = "유저의 역할은 USER 또는 ADMIN이어야 합니다.")
@@ -66,11 +64,18 @@ public class User {
     @Builder.Default
     private LocalDateTime deletedAt = null;
 
-    public static User of(String username, String email, String password) {
+    @PrePersist
+    public void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString();
+        }
+    }
+
+    public static User of(String id, String username, String email) {
         return User.builder()
+                .id(id)
                 .username(username)
                 .email(email)
-                .password(password)
                 .build();
     }
 }
