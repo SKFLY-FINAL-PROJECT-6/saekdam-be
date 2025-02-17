@@ -56,5 +56,5 @@ jobs:
                       \"sudo docker system prune -f\",\
                       \"sudo docker pull sunbeen/saekdam-be:latest\",\
                       \"sudo docker compose -f /home/ec2-user/app/docker-compose.yml down\",\
-                      \"sudo docker compose -f /home/ec2-user/app/docker-compose.yml up -d\"\
+                      \"sudo docker compose -f /home/ec2-user/app/docker-compose.yml up -d --force-recreate\"\
                     ]}"
