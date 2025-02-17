@@ -1,5 +1,5 @@
 # 1. OpenJDK 17 (Alpine 기반)
-FROM openjdk:17-alpine
+FROM --platform=linux/amd64 openjdk:17-alpine
 
 # 2. 작업 디렉토리 설정
 WORKDIR /app
