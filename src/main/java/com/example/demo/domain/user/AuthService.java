@@ -58,6 +58,7 @@ class AuthServiceImpl implements AuthService {
         Map<String, String> tokenResponse = getKakaoToken(code);
         String idToken = tokenResponse.get("id_token");
         Map<String, Object> payload = parseJwt(idToken);
+        System.out.println(payload);
 
         String id = "kakao-" + payload.get("sub").toString();
         String nickname = "kakao@" + payload.get("nickname").toString();
