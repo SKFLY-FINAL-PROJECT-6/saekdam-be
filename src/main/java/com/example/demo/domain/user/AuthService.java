@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import java.util.Base64;
+
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -16,6 +18,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 public interface AuthService {
     String generateKakaoLoginUrl();
@@ -28,6 +33,7 @@ public interface AuthService {
 @Slf4j
 class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
     private final RestTemplate restTemplate;
 
     @Value("${oauth2.kakao.client-id}")
@@ -50,13 +56,34 @@ class AuthServiceImpl implements AuthService {
     @Override
     public String processKakaoCallback(String code) {
         Map<String, String> tokenResponse = getKakaoToken(code);
+        String idToken = tokenResponse.get("id_token");
+        Map<String, Object> payload = parseJwt(idToken);
 
-        User user = User.builder()
-                .id(tokenResponse.get("sub"))
-                .username(tokenResponse.get("nickname"))
-                .build();
+        String id = "kakao-" + payload.get("sub").toString();
+        String nickname = "kakao@" + payload.get("nickname").toString();
+        String email = payload.get("email") != null ? payload.get("email").toString() : null;
+
+        if (!userRepository.findById(id).isEmpty()) {
+            return jwtTokenProvider.createToken(userRepository.findById(id).get());
+        }
+
+        User user = User.of(id, nickname, email);
+        userRepository.save(user);
 
         return jwtTokenProvider.createToken(user);
+    }
+
+    private Map<String, Object> parseJwt(String idToken) {
+        String[] parts = idToken.split("\\.");
+        String payload = new String(Base64.getDecoder().decode(parts[1]));
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.readValue(payload, new TypeReference<Map<String, Object>>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse JWT payload", e);
+        }
     }
 
     private Map<String, String> getKakaoToken(String code) {
