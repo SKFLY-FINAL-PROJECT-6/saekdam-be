@@ -80,6 +80,10 @@ public class Post {
     @Builder.Default
     private LocalDateTime deletedAt = null;
 
+    @Column(name = "thumbnail_id")
+    @Builder.Default
+    private String thumbnail = null;
+
     public static Post create(PostCreateRequest postWrite, Jwt jwt) {
         Post post = Post.builder()
                 .title(postWrite.getTitle())
@@ -89,6 +93,10 @@ public class Post {
         if (jwt != null) {
             post.setUserId(jwt.getSubject());
             post.setAuthor(jwt.getClaim("name"));
+        }
+
+        if (!postWrite.getImages().isEmpty()) {
+            post.setThumbnail(postWrite.getImages().get(0).getId());
         }
 
         return post;
