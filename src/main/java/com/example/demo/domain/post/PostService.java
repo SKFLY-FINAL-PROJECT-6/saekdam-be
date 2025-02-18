@@ -27,6 +27,7 @@ import com.example.demo.domain.like.PostLikeRepository;
 import com.example.demo.domain.like.entity.PostLike;
 
 public interface PostService {
+    String findUserIdById(String id);
 
     PostCreateResponse create(PostCreateRequest postWrite, Jwt jwt);
 
@@ -34,7 +35,7 @@ public interface PostService {
 
     String updateContent(String id, String content);
 
-    void delete(String id, Jwt jwt);
+    void delete(String id);
 
     PostResponse findById(String id, Jwt jwt);
 
@@ -61,6 +62,13 @@ class PostServiceImpl implements PostService {
     private final CommentRepository commentRepository;
     private final PostImageRepository postImageRepository;
     private final PostLikeRepository postLikeRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public String findUserIdById(String id) {
+        return postRepository.findUserIdById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+    }
 
     @Override
     @Transactional
@@ -96,17 +104,7 @@ class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public void delete(String id, Jwt jwt) {
-        String author = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"))
-                .getUserId();
-        String userId = jwt != null ? jwt.getSubject() : null;
-
-        if (author != null && !author.equals(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "작성자만 삭제할 수 있습니다.");
-        }
-
+    public void delete(String id) {
         java.time.LocalDateTime deleteTime = java.time.LocalDateTime.now();
         Post postToDelete = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
 

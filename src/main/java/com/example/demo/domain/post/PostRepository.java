@@ -1,6 +1,7 @@
 package com.example.demo.domain.post;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, String> {
+    Optional<String> findUserIdById(String id);
+
     List<Post> findByTitleContaining(String title);
 
     List<Post> findByContentContaining(String content);

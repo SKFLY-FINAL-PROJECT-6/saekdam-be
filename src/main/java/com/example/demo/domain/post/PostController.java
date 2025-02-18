@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -67,7 +69,17 @@ class PostControllerImpl implements PostController {
     public ResponseEntity<String> delete(
             @PathVariable String id,
             @AuthenticationPrincipal Jwt jwt) {
-        postService.delete(id, jwt);
+
+        String authorId = postService.findUserIdById(id);
+        String userId = jwt != null ? jwt.getSubject() : null;
+
+        if (authorId != null && !authorId.equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "작성자만 삭제할 수 있습니다.");
+        }
+
+        postService.delete(id);
         return ResponseEntity.ok("Deleted");
     }
 
