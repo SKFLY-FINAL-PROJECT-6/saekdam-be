@@ -95,10 +95,6 @@ public class Post {
             post.setAuthor(jwt.getClaim("name"));
         }
 
-        if (!postWrite.getImages().isEmpty()) {
-            post.setThumbnail(postWrite.getImages().get(0).getId());
-        }
-
         return post;
     }
 }

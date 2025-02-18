@@ -70,18 +70,23 @@ class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
     }
 
-    @Override
-    @Transactional
     public PostCreateResponse create(PostCreateRequest postWrite, Jwt jwt) {
-        final Post savedPost = postRepository.save(Post.create(postWrite, jwt));
+        Post post = Post.create(postWrite, jwt);
+        Post savedPost = postRepository.save(post);
 
         return Optional.ofNullable(postWrite.getImages())
                 .filter(images -> !images.isEmpty())
                 .map(images -> {
-                    images.forEach(image -> image.setPostId(savedPost.getId()));
+                    List<PostImage> savedImages = postImageRepository.saveAll(images.stream()
+                            .peek(image -> image.setPostId(savedPost.getId()))
+                            .collect(Collectors.toList()));
+
+                    // 이미지 저장 후 thumbnail 설정
+                    savedPost.setThumbnail(savedImages.get(0).getId());
+                    postRepository.save(savedPost);
+
                     return new PostCreateResponse(
-                            postImageRepository.saveAll(images)
-                                    .stream()
+                            savedImages.stream()
                                     .map(image -> UUID.fromString(image.getId()))
                                     .collect(Collectors.toList()));
                 })
