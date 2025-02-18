@@ -1,7 +1,10 @@
 package com.example.demo.domain.comment;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -47,11 +50,13 @@ class CommentControllerImpl implements CommentController {
     public ResponseEntity<Void> delete(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable String id) {
-        String author = commentService.findById(id).getUserId();
+        String authorId = commentService.findById(id).getUserId();
         String userId = jwt != null ? jwt.getSubject() : null;
 
-        if (author != null && !author.equals(userId)) {
-            throw new RuntimeException("작성자만 삭제할 수 있습니다.");
+        if (authorId != null && !authorId.equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "작성자만 삭제할 수 있습니다.");
         }
 
         commentService.delete(id);
