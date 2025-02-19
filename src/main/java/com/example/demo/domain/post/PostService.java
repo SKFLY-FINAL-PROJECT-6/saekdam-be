@@ -109,12 +109,12 @@ class PostServiceImpl implements PostService {
     @Override
     public void delete(String id) {
         java.time.LocalDateTime deleteTime = java.time.LocalDateTime.now();
-        Post postToDelete = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
+        commentRepository.deleteByPostId(id, deleteTime);
+        Post postToDelete = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
 
         postToDelete.setDeletedAt(deleteTime);
         postRepository.save(postToDelete);
-
-        commentRepository.deleteByPostId(id, deleteTime);
     }
 
     @Override
