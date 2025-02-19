@@ -6,17 +6,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/storage")
+@RequiredArgsConstructor
 public class StorageController {
 
     private final StorageService storageService;
-
-    public StorageController(StorageService storageService) {
-        this.storageService = storageService;
-    }
 
     @PostMapping("/uploadUrls")
     public ResponseEntity<List<String>> generatePresignedUrls(@RequestBody List<String> uuids) {
