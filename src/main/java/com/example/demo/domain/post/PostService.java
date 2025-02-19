@@ -56,6 +56,7 @@ public interface PostService {
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
@@ -94,21 +95,18 @@ class PostServiceImpl implements PostService {
     }
 
     @Override
-    @Transactional
     public String updateTitle(String id, String title) {
         postRepository.updateTitle(id, title);
         return title;
     }
 
     @Override
-    @Transactional
     public String updateContent(String id, String content) {
         postRepository.updateContent(id, content);
         return content;
     }
 
     @Override
-    @Transactional
     public void delete(String id) {
         java.time.LocalDateTime deleteTime = java.time.LocalDateTime.now();
         Post postToDelete = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
@@ -120,7 +118,6 @@ class PostServiceImpl implements PostService {
     }
 
     @Override
-    @Transactional
     public PostResponse findById(String id, Jwt jwt) {
         Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
         List<Comment> comments = commentRepository.findByPostId(id);
@@ -170,7 +167,6 @@ class PostServiceImpl implements PostService {
     }
 
     @Override
-    @Transactional
     public void like(String id, Jwt jwt) {
         if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "로그인이 필요합니다.");
