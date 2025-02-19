@@ -11,11 +11,13 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, String> {
-    Optional<String> findUserIdById(String id);
 
     List<Post> findByTitleContaining(String title);
 
     List<Post> findByContentContaining(String content);
+
+    @Query("SELECT p.userId FROM Post p WHERE p.id = :id")
+    Optional<String> findUserIdById(String id);
 
     @Modifying
     @Query("UPDATE Post p SET p.views = p.views + 1 WHERE p.id = :id")
