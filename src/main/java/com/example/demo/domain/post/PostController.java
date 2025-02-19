@@ -70,7 +70,7 @@ class PostControllerImpl implements PostController {
             @PathVariable String id,
             @AuthenticationPrincipal Jwt jwt) {
 
-        String authorId = postService.findUserIdById(id);
+        String authorId = postService.findUserIdById(id).orElse(null);
         String userId = jwt != null ? jwt.getSubject() : null;
 
         if (authorId != null && !authorId.equals(userId)) {
