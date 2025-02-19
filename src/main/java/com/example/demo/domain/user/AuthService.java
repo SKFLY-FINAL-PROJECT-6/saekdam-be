@@ -55,12 +55,9 @@ class AuthServiceImpl implements AuthService {
 
     @Override
     public String processKakaoCallback(String code) {
-        System.out.println(code);
         Map<String, String> tokenResponse = getKakaoToken(code);
-        System.out.println(tokenResponse);
         String idToken = tokenResponse.get("id_token");
         Map<String, Object> payload = parseJwt(idToken);
-        System.out.println(payload);
 
         String id = "kakao-" + payload.get("sub").toString();
         String nickname = "kakao@" + payload.get("nickname").toString();

@@ -27,7 +27,7 @@ import com.example.demo.domain.like.PostLikeRepository;
 import com.example.demo.domain.like.entity.PostLike;
 
 public interface PostService {
-    String findUserIdById(String id);
+    Optional<String> findUserIdById(String id);
 
     PostCreateResponse create(PostCreateRequest postWrite, Jwt jwt);
 
@@ -66,9 +66,8 @@ class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public String findUserIdById(String id) {
-        return postRepository.findUserIdById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+    public Optional<String> findUserIdById(String id) {
+        return postRepository.findUserIdById(id);
     }
 
     public PostCreateResponse create(PostCreateRequest postWrite, Jwt jwt) {
