@@ -41,10 +41,6 @@ public interface PostService {
 
     Page<Post> findAll(Pageable pageable);
 
-    List<Comment> findAllComments(String id);
-
-    List<UUID> findAllImages(String id);
-
     List<Post> findByTitleContaining(String title);
 
     List<Post> findByContentContaining(String content);
@@ -81,7 +77,6 @@ class PostServiceImpl implements PostService {
                             .peek(image -> image.setPostId(savedPost.getId()))
                             .collect(Collectors.toList()));
 
-                    // 이미지 저장 후 thumbnail 설정
                     savedPost.setThumbnail(savedImages.get(0).getId());
                     postRepository.save(savedPost);
 
@@ -118,11 +113,12 @@ class PostServiceImpl implements PostService {
 
     @Override
     public PostResponse findById(String id, Jwt jwt) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
         List<Comment> comments = commentRepository.findByPostId(id);
         boolean isLiked = (jwt != null) ? postLikeRepository.existsByPostIdAndUserId(id, jwt.getSubject()) : false;
 
-        List<UUID> images = postImageRepository.findByPostId(id)
+        List<UUID> images = postImageRepository.findByPostIdOrderByOrderNumber(id) // orderNumber로 정렬
                 .stream()
                 .map(image -> UUID.fromString(image.getId()))
                 .collect(Collectors.toList());
@@ -130,21 +126,6 @@ class PostServiceImpl implements PostService {
         postRepository.incrementViews(id);
 
         return PostResponse.of(post, isLiked, images, comments);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Comment> findAllComments(String id) {
-        return commentRepository.findByPostId(id);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UUID> findAllImages(String id) {
-        return postImageRepository.findByPostId(id)
-                .stream()
-                .map(image -> UUID.fromString(image.getId()))
-                .collect(Collectors.toList());
     }
 
     @Override
