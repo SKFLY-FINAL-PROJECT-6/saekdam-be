@@ -3,7 +3,6 @@ package com.example.demo.domain.user;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import java.util.Base64;
 
@@ -30,7 +29,6 @@ public interface AuthService {
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
