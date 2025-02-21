@@ -19,36 +19,13 @@ import com.example.demo.domain.post.dto.PostResponse;
 
 import lombok.RequiredArgsConstructor;
 
-public interface PostController {
-    ResponseEntity<PostResponse> findById(String id, Jwt jwt);
-
-    ResponseEntity<PostCreateResponse> create(PostCreateRequest postWrite, Jwt jwt);
-
-    ResponseEntity<String> updateTitle(String id, String title);
-
-    ResponseEntity<String> updateContent(String id, String content);
-
-    ResponseEntity<String> delete(String id, Jwt jwt);
-
-    ResponseEntity<Page<Post>> findAll(Pageable pageable);
-
-    ResponseEntity<List<Post>> findByTitleContaining(String title);
-
-    ResponseEntity<List<Post>> findByContentContaining(String content);
-
-    ResponseEntity<String> like(String id, Jwt jwt);
-
-    ResponseEntity<String> unlike(String id, Jwt jwt);
-}
-
 @RestController
 @RequestMapping("/posts")
 @RequiredArgsConstructor
-class PostControllerImpl implements PostController {
+public class PostController {
 
     private final PostService postService;
 
-    @Override
     @GetMapping("/{id}")
     public ResponseEntity<PostResponse> findById(
             @PathVariable String id,
@@ -56,7 +33,6 @@ class PostControllerImpl implements PostController {
         return ResponseEntity.ok(postService.findById(id, jwt));
     }
 
-    @Override
     @PostMapping
     public ResponseEntity<PostCreateResponse> create(
             @RequestBody PostCreateRequest postWrite,
@@ -64,7 +40,6 @@ class PostControllerImpl implements PostController {
         return ResponseEntity.ok(postService.create(postWrite, jwt));
     }
 
-    @Override
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(
             @PathVariable String id,
@@ -83,7 +58,6 @@ class PostControllerImpl implements PostController {
         return ResponseEntity.ok("Deleted");
     }
 
-    @Override
     @PutMapping("/title/{id}")
     public ResponseEntity<String> updateTitle(
             @PathVariable String id,
@@ -91,7 +65,6 @@ class PostControllerImpl implements PostController {
         return ResponseEntity.ok(postService.updateTitle(id, title));
     }
 
-    @Override
     @PutMapping("/content/{id}")
     public ResponseEntity<String> updateContent(
             @PathVariable String id,
@@ -99,28 +72,24 @@ class PostControllerImpl implements PostController {
         return ResponseEntity.ok(postService.updateContent(id, content));
     }
 
-    @Override
     @GetMapping
     public ResponseEntity<Page<Post>> findAll(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(postService.findAll(pageable));
     }
 
-    @Override
     @GetMapping("/search/title")
     public ResponseEntity<List<Post>> findByTitleContaining(
             @PageableDefault() @RequestParam String title) {
         return ResponseEntity.ok(postService.findByTitleContaining(title));
     }
 
-    @Override
     @GetMapping("/search/content")
     public ResponseEntity<List<Post>> findByContentContaining(
             @RequestParam String content) {
         return ResponseEntity.ok(postService.findByContentContaining(content));
     }
 
-    @Override
     @PostMapping("/{id}/likes")
     public ResponseEntity<String> like(
             @PathVariable String id,
@@ -129,7 +98,6 @@ class PostControllerImpl implements PostController {
         return ResponseEntity.ok("Liked");
     }
 
-    @Override
     @DeleteMapping("/{id}/likes")
     public ResponseEntity<String> unlike(
             @PathVariable String id,

@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
-
     private final AuthService authService;
 
     @GetMapping("/kakao/login")

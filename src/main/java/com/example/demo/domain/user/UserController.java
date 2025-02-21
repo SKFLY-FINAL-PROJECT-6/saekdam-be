@@ -9,29 +9,17 @@ import com.example.demo.domain.user.dto.LoginRequest;
 
 import lombok.RequiredArgsConstructor;
 
-public interface UserController {
-
-    ResponseEntity<User> create(User user);
-
-    ResponseEntity<String> login(LoginRequest loginRequest);
-
-    ResponseEntity<User> findById(Jwt jwt);
-}
-
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-class UserControllerImpl implements UserController {
-
+public class UserController {
     private final UserService userService;
 
-    @Override
     @PostMapping
     public ResponseEntity<User> create(@RequestBody User user) {
         return ResponseEntity.ok(userService.create(user));
     }
 
-    @Override
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
         return ResponseEntity.ok(userService.login(
@@ -39,7 +27,6 @@ class UserControllerImpl implements UserController {
                 loginRequest.getPassword()));
     }
 
-    @Override
     @GetMapping("/me")
     public ResponseEntity<User> findById(@AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(userService.findById(jwt));

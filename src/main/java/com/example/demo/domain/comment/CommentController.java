@@ -9,22 +9,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-public interface CommentController {
-    ResponseEntity<Comment> create(Jwt jwt, Comment comment);
-
-    ResponseEntity<String> updateContent(String id, String content);
-
-    ResponseEntity<Void> delete(Jwt jwt, String id);
-}
-
 @RestController
 @RequestMapping("/comments")
 @RequiredArgsConstructor
-class CommentControllerImpl implements CommentController {
+public class CommentController {
 
     private final CommentService commentService;
 
-    @Override
     @PostMapping
     public ResponseEntity<Comment> create(
             @AuthenticationPrincipal Jwt jwt,
@@ -37,7 +28,6 @@ class CommentControllerImpl implements CommentController {
         return ResponseEntity.ok(commentService.create(comment));
     }
 
-    @Override
     @PutMapping("/{id}")
     public ResponseEntity<String> updateContent(
             @PathVariable String id,
@@ -45,7 +35,6 @@ class CommentControllerImpl implements CommentController {
         return ResponseEntity.ok(commentService.updateContent(id, content));
     }
 
-    @Override
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @AuthenticationPrincipal Jwt jwt,
