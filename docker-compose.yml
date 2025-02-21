@@ -5,7 +5,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        image: sunbeen/saekdam-be:latest # Docker Hub에 푸시할 이미지 이름
+        image: sunbeen/saekdam-be:latest
         container_name: app-app
         env_file:
             - .env
@@ -13,8 +13,11 @@ services:
             - '8080:8080'
         environment:
             - AWS_S3_REGION=${AWS_REGION}
+            - REDIS_HOST=redis
         depends_on:
             mysql:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
         networks:
             - backend
@@ -39,8 +42,25 @@ services:
         networks:
             - backend
 
+    redis:
+        image: redis:7.0
+        container_name: app-redis
+        ports:
+            - '6379:6379'
+        volumes:
+            - redis_data:/data
+        command: redis-server --appendonly yes
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - backend
+
 volumes:
     mysql_data:
+    redis_data:
 
 networks:
     backend:

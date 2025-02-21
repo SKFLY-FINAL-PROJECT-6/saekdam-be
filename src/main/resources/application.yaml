@@ -19,6 +19,17 @@ spring:
             max-lifetime: 1200000
             auto-commit: true
 
+    data:
+        redis:
+            host: ${REDIS_HOST:redis}
+            port: ${REDIS_PORT:6379}
+            lettuce:
+                pool:
+                    max-active: 10 # 풀에서 사용할 수 있는 최대 연결 수
+                    max-idle: 10 # 풀에서 유지할 최대 유휴 연결 수
+                    min-idle: 2 # 풀에서 유지할 최소 유휴 연결 수
+                    max-wait: -1 # 연결 풀이 고갈되었을 때 클라이언트가 블록되는 최대 시간 = 무제한(-1)
+
     # JPA 설정
     jpa:
         show-sql: true
