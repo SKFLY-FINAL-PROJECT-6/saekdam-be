@@ -1,4 +1,4 @@
-# 1. OpenJDK 17 (Alpine 기반)
+# 1. OpenJDK 17 (Alpine 기반, x86_64) 이미지 사용
 FROM --platform=linux/amd64 openjdk:17-alpine
 
 # 2. 작업 디렉토리 설정
@@ -14,5 +14,5 @@ COPY . .
 RUN chmod +x gradlew
 RUN ./gradlew clean build -x test && ls -al build/libs && cp build/libs/demo-0.0.1-SNAPSHOT.jar app.jar
 
-# 6. JAR 실행
+# 6. JAR 파일 실행
 CMD ["java", "-jar", "app.jar"]
