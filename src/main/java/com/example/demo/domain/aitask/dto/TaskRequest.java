@@ -8,4 +8,8 @@ import lombok.NoArgsConstructor;
 public class TaskRequest {
     private String theme;
     private String requirement;
+    private Float x;
+    private Float y;
+    private Float w;
+    private Float h;
 }

@@ -21,7 +21,7 @@ public class TaskProgressMessage {
         return TaskProgressMessage.builder()
                 .taskId(task.getId())
                 .imageId(task.getImageId())
-                .status(task.getTaskProgress())
+                .status(TaskProgress.WAITING)
                 .build();
     }
 }
