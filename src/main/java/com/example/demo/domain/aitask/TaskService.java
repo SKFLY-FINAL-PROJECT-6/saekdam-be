@@ -2,14 +2,16 @@ package com.example.demo.domain.aitask;
 
 import org.springframework.stereotype.Service;
 
-import com.example.demo.domain.aitask.dto.Task;
-import com.example.demo.domain.aitask.dto.TaskProgressMessage;
+import com.example.demo.domain.aitask.dto.TaskResponse;
 import com.example.demo.domain.aitask.dto.TaskRequest;
 
 import lombok.RequiredArgsConstructor;
+import java.util.UUID;
 
 public interface TaskService {
-    TaskProgressMessage create(TaskRequest taskRequest);
+    TaskResponse createTaskId();
+
+    void submitTask(TaskRequest request);
 }
 
 @Service
@@ -18,10 +20,12 @@ class TaskServiceImpl implements TaskService {
     private final TaskPublisher taskPublisher;
 
     @Override
-    public TaskProgressMessage create(TaskRequest taskRequest) {
-        Task newTask = Task.create(taskRequest);
-        taskPublisher.publish(newTask);
+    public TaskResponse createTaskId() {
+        return new TaskResponse(UUID.randomUUID().toString());
+    }
 
-        return TaskProgressMessage.create(newTask);
+    @Override
+    public void submitTask(TaskRequest request) {
+        taskPublisher.publish(request);
     }
 }
