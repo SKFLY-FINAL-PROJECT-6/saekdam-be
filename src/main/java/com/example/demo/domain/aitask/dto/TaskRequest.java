@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class TaskRequest {
-    private String taskId;
+    private String id;
     private String theme;
     private String requirement;
     private Float x;
