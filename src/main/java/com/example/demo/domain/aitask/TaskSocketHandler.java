@@ -20,6 +20,7 @@ public class TaskSocketHandler extends TextWebSocketHandler {
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // 연결 성립
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
         String taskId = extractTaskId(session);
@@ -31,7 +32,7 @@ public class TaskSocketHandler extends TextWebSocketHandler {
                 .map(uri -> uri.getPath())
                 .orElseThrow(() -> new IllegalArgumentException("WebSocket URI cannot be null"));
 
-        // /ws/tasks/{taskId} 형식에서 taskId 추출
+        // /ws/tasks/{taskId}
         String[] pathSegments = path.split("/");
         if (pathSegments.length < 4) {
             throw new IllegalArgumentException("Invalid URI format");
@@ -39,7 +40,7 @@ public class TaskSocketHandler extends TextWebSocketHandler {
         return pathSegments[3]; // /ws/tasks/{taskId} 에서 마지막 path segment가 taskId
     }
 
-    // 연결 종료 시
+    // 연결 종료
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) throws Exception {
         String taskId = extractTaskId(session);
@@ -49,6 +50,7 @@ public class TaskSocketHandler extends TextWebSocketHandler {
     // TaskProgressMessage 객체 전송
     public void sendProgress(TaskProgressMessage message) {
         WebSocketSession session = sessions.get(message.getTaskId());
+
         if (session != null && session.isOpen()) {
             try {
                 session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
