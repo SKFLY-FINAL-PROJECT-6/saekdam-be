@@ -10,6 +10,7 @@ import java.net.URL;
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import lombok.RequiredArgsConstructor;
 
 public interface StorageService {
     List<String> createObjectUploadUrls(List<String> objectKeys);
@@ -18,15 +19,12 @@ public interface StorageService {
 }
 
 @Service
+@RequiredArgsConstructor
 class S3StorageService implements StorageService {
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
 
     private final AmazonS3 s3Client;
-
-    public S3StorageService(AmazonS3 s3Client) {
-        this.s3Client = s3Client;
-    }
 
     @Override
     public List<String> createObjectUploadUrls(List<String> objectKeys) {
@@ -53,7 +51,7 @@ class S3StorageService implements StorageService {
     private Date getExpirationTime() {
         Date expiration = new Date();
         long expirationInMs = expiration.getTime();
-        expirationInMs += 1000 * 60 * 30;
+        expirationInMs += 1000 * 60 * 30; // 30 minutes
         expiration.setTime(expirationInMs);
         return expiration;
     }
